@@ -1,0 +1,57 @@
+# Visual Studio user and transient files
+*.suo
+*.user
+*.userosscache
+*.ncb
+*.sdf
+*.opensdf
+*.aps
+*.opt
+*.plg
+*.VC.db
+*.vc.db
+*.sln.docstates
+
+# Visual C++ build output
+/bin/
+/obj/
+/LocalSendXP/bin/
+/LocalSendXP/obj/
+*.obj
+*.res
+*.pch
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.tlog
+*.lastbuildstate
+
+# Executables and libraries
+*.exe
+*.dll
+*.com
+*.sys
+
+# Build and application logs
+*.log
+*.buildlog
+*.tmp
+
+# Local runtime configuration
+LocalSendXP.ini
+
+# Visual Studio / editor state
+.vs/
+.idea/
+
+# Windows and macOS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Patch and backup files
+*.bak
+*.orig
+*.rej
