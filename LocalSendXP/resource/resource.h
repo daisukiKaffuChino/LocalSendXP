@@ -4,8 +4,6 @@
 #define IDR_MAINMENU                    101
 #define IDR_ACCELERATOR                 102
 #define IDI_APP                         103
-#define IDI_SMALL                       104
-#define IDI_TOOL_SEND_FOLDER            105
 #define IDI_TOOL_FROM_URL               106
 #define IDI_TOOL_OPEN_FOLDER            107
 #define IDI_TOOL_SETTINGS               108
@@ -49,6 +47,7 @@
 #define IDS_COL_STATE                   220
 #define IDS_COL_DIR                     221
 #define IDS_BTN_SEND                    222
+#define IDS_BTN_SENDFOLDER              282
 #define IDS_BTN_REFRESH                 223
 #define IDS_BTN_SETTINGS                224
 #define IDS_TYPE_MOBILE                 225
@@ -271,7 +270,7 @@
 #define IDC_TRANSFER_LIST               1001
 #define IDC_BTN_SEND                    1002
 #define IDC_BTN_REFRESH                 1003
-#define IDC_BTN_SETTINGS                1004
+#define IDC_BTN_SENDFOLDER              1011
 #define IDC_STATUSBAR                   1005
 #define IDC_PROGRESS                    1006
 #define IDC_DEVICE_GROUP                1007

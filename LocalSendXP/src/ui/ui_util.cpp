@@ -168,11 +168,10 @@ void ApplyText(HWND dialog, int controlId, int stringId)
 namespace {
 
 const int kToolbarIconSize = 32;
-const int kToolbarIconCount = 6;
+const int kToolbarIconCount = 5;
 
 const int kToolbarIconIds[kToolbarIconCount] =
 {
-    IDI_TOOL_SEND_FOLDER,
     IDI_TOOL_FROM_URL,
     IDI_TOOL_OPEN_FOLDER,
     IDI_TOOL_HISTORY,

@@ -126,12 +126,29 @@ if defined ZH (
 )
 
 rem ------------------------------------------------------------ 6) compile
-echo [INFO] compiling %ISS% ...
+rem Inno Setup 5 reads .iss files with the ANSI code page as well, so the script
+rem (which carries Chinese custom messages) is converted the same way.  The
+rem converted copy has to sit next to the original, otherwise the relative
+rem Source: paths would be resolved against the wrong folder.
+set "ISS_BUILD=%~dp0_localized.iss"
+if exist "%~dp0prepare_isl.ps1" (
+    for %%P in (powershell.exe) do set "PS=%%~$PATH:P"
+    if defined PS (
+        "!PS!" -NoProfile -ExecutionPolicy Bypass -File "%~dp0prepare_isl.ps1" "%ISS%" "!ISS_BUILD!"
+        if errorlevel 1 goto :failed
+    ) else (
+        set "ISS_BUILD=%ISS%"
+    )
+) else (
+    set "ISS_BUILD=%ISS%"
+)
+
+echo [INFO] compiling !ISS_BUILD! ...
 set "ISCC_LOG=%~dp0output\iscc.log"
 if defined ZH (
-    "!ISCC!" "/DMyAppVersion=%VERSION%" "/DZH_ISL_FILE=!ZH_ISL!" "%ISS%" > "!ISCC_LOG!" 2>&1
+    "!ISCC!" "/DMyAppVersion=%VERSION%" "/DZH_ISL_FILE=!ZH_ISL!" "!ISS_BUILD!" > "!ISCC_LOG!" 2>&1
 ) else (
-    "!ISCC!" "/DMyAppVersion=%VERSION%" "%ISS%" > "!ISCC_LOG!" 2>&1
+    "!ISCC!" "/DMyAppVersion=%VERSION%" "!ISS_BUILD!" > "!ISCC_LOG!" 2>&1
 )
 set "ISCC_RESULT=!errorlevel!"
 rem Show the compiler output (it was captured so that it is also kept on disk).
@@ -147,6 +164,7 @@ if not "!ISCC_RESULT!"=="0" (
     echo [ERROR] the compiler log is in "!ISCC_LOG!"
     goto :failed
 )
+if not "!ISS_BUILD!"=="%ISS%" del "!ISS_BUILD!" >nul 2>&1
 
 set "SETUP=%~dp0output\LocalSendXP-%VERSION%-setup.exe"
 echo.

@@ -24,6 +24,12 @@
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0"
 #endif
+; VersionInfoVersion must be numeric (four numbers, e.g. 1.0.0.0) while
+; AppVersion may be any text.  build_installer.bat reads a plain x.y.z version
+; out of src\util\common.cpp, so appending ".0" gives the four part form.
+#ifndef MyAppVersionQuad
+  #define MyAppVersionQuad MyAppVersion + ".0"
+#endif
 #ifndef MyAppPublisher
   #define MyAppPublisher "daisukiKaffuChino"
 #endif
@@ -73,12 +79,12 @@ UninstallDisplayIcon={app}\LocalSendXP.exe
 UninstallDisplayName={#MyAppName} {#MyAppVersion}
 Compression=lzma2/max
 SolidCompression=yes
-VersionInfoVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersionQuad}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoCopyright=Copyright (C) 2026 daisukiKaffuChino
 VersionInfoDescription={#MyAppName} setup program
 VersionInfoProductName={#MyAppName}
-VersionInfoProductVersion={#MyAppVersion}
+VersionInfoProductVersion={#MyAppVersionQuad}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

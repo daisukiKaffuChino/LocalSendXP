@@ -23,8 +23,8 @@ struct WindowState
     HWND statusBar;
     HWND progress;
     HWND sendButton;
+    HWND sendFolderButton;
     HWND refreshButton;
-    HWND settingsButton;
     HWND deviceGroup;
     HWND transferGroup;
     HFONT font;
@@ -48,8 +48,8 @@ WindowState::WindowState()
       statusBar(NULL),
       progress(NULL),
       sendButton(NULL),
+      sendFolderButton(NULL),
       refreshButton(NULL),
-      settingsButton(NULL),
       deviceGroup(NULL),
       transferGroup(NULL),
       font(NULL),
@@ -64,6 +64,54 @@ WindowState g_window;
 const int kDeviceColumns = 5;
 const int kTransferColumns = 6;
 const int kMaxSendFiles = 2000;
+
+std::wstring ControlText(HWND control)
+{
+    int length = GetWindowTextLengthW(control);
+    std::vector<wchar_t> buffer((size_t)length + 1);
+    GetWindowTextW(control, &buffer[0], length + 1);
+    return std::wstring(&buffer[0], (size_t)length);
+}
+
+// Sizes a push button from its own caption.  The "send folder" label is wider
+// than "send file", and the English labels differ again, so the old fixed 82
+// pixel width clipped the longer ones by a couple of pixels.
+int ButtonWidthFor(HWND button, int minimum)
+{
+    if (button == NULL)
+    {
+        return minimum;
+    }
+
+    std::wstring text = ControlText(button);
+    if (text.empty())
+    {
+        return minimum;
+    }
+
+    int width = minimum;
+    HDC dc = CreateCompatibleDC(NULL);
+    if (dc != NULL)
+    {
+        HFONT font = (HFONT)SendMessageW(button, WM_GETFONT, 0, 0);
+        HGDIOBJ previous = (font != NULL) ? SelectObject(dc, font) : NULL;
+
+        SIZE size;
+        ZeroMemory(&size, sizeof(size));
+        GetTextExtentPoint32W(dc, text.c_str(), (int)text.size(), &size);
+        if (size.cx + 20 > width)      // button frame plus focus rectangle
+        {
+            width = size.cx + 20;
+        }
+
+        if (previous != NULL)
+        {
+            SelectObject(dc, previous);
+        }
+        DeleteDC(dc);
+    }
+    return width;
+}
 
 std::wstring LastSeenText(const Device& device)
 {
@@ -472,19 +520,19 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
         SendMessageW(g_window.toolbar, TB_SETPADDING, 0, MAKELPARAM(8, 5));
         SendMessageW(g_window.toolbar, TB_SETMAXTEXTROWS, 1, 0);
 
-        const int buttonCount = 6;
-        const int commandIds[6] =
+        const int buttonCount = 5;
+        const int commandIds[5] =
         {
-            IDM_FILE_SENDFOLDER, IDM_FILE_FROMURL, IDM_DEVICE_OPENFOLDER,
-            IDM_TOOLS_HISTORY, IDM_TOOLS_SETTINGS, IDM_HELP_ABOUT
+            IDM_FILE_FROMURL, IDM_DEVICE_OPENFOLDER, IDM_TOOLS_HISTORY,
+            IDM_TOOLS_SETTINGS, IDM_HELP_ABOUT
         };
-        const int textIds[6] =
+        const int textIds[5] =
         {
-            IDS_TB_SENDFOLDER, IDS_TB_FROMURL, IDS_TB_OPENFOLDER,
-            IDS_TB_HISTORY, IDS_TB_SETTINGS, IDS_TB_ABOUT
+            IDS_TB_FROMURL, IDS_TB_OPENFOLDER, IDS_TB_HISTORY,
+            IDS_TB_SETTINGS, IDS_TB_ABOUT
         };
         // The image list holds exactly the button icons, in this order.
-        const int imageIds[6] = { 0, 1, 2, 3, 4, 5 };
+        const int imageIds[5] = { 0, 1, 2, 3, 4 };
 
         g_window.toolbarTexts.clear();
         g_window.toolbarTextIds.clear();
@@ -496,7 +544,7 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
             g_window.toolbarCommandIds.push_back(commandIds[i]);
         }
 
-        TBBUTTON buttons[6];
+        TBBUTTON buttons[5];
         ZeroMemory(buttons, sizeof(buttons));
         for (int i = 0; i < buttonCount; ++i)
         {
@@ -542,15 +590,17 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
                                           0, 0, 10, 10, hwnd,
                                           (HMENU)IDC_BTN_SEND, instance, NULL);
 
+    // Sending a folder is a plain push button next to "send file"; it used to be
+    // a toolbar button, which made the toolbar taller than it needed to be.
+    g_window.sendFolderButton = CreateWindowExW(0, L"BUTTON", LoadStr(IDS_BTN_SENDFOLDER).c_str(),
+                                                WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+                                                0, 0, 10, 10, hwnd,
+                                                (HMENU)IDC_BTN_SENDFOLDER, instance, NULL);
+
     g_window.refreshButton = CreateWindowExW(0, L"BUTTON", LoadStr(IDS_BTN_REFRESH).c_str(),
                                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
                                              0, 0, 10, 10, hwnd,
                                              (HMENU)IDC_BTN_REFRESH, instance, NULL);
-
-    g_window.settingsButton = CreateWindowExW(0, L"BUTTON", LoadStr(IDS_BTN_SETTINGS).c_str(),
-                                              WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-                                              0, 0, 10, 10, hwnd,
-                                              (HMENU)IDC_BTN_SETTINGS, instance, NULL);
 
     g_window.statusBar = CreateWindowExW(0, STATUSCLASSNAMEW, L"",
                                          WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP,
@@ -578,8 +628,8 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
     children[1] = g_window.transferList;
     children[2] = g_window.progress;
     children[3] = g_window.sendButton;
-    children[4] = g_window.refreshButton;
-    children[5] = g_window.settingsButton;
+    children[4] = g_window.sendFolderButton;
+    children[5] = g_window.refreshButton;
     children[6] = g_window.deviceGroup;
     children[7] = g_window.transferGroup;
 
@@ -650,6 +700,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return 0;
 
         case IDM_FILE_SENDFOLDER:
+        case IDC_BTN_SENDFOLDER:
             OnSendFolder(hwnd);
             return 0;
 
@@ -677,7 +728,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return 0;
 
         case IDM_TOOLS_SETTINGS:
-        case IDC_BTN_SETTINGS:
             OnSettings(hwnd);
             return 0;
 
@@ -946,8 +996,8 @@ void RefreshMainWindowTexts(HWND hwnd)
         case IDC_BTN_REFRESH:
             SetWindowTextW(child, LoadStr(IDS_BTN_REFRESH).c_str());
             break;
-        case IDC_BTN_SETTINGS:
-            SetWindowTextW(child, LoadStr(IDS_BTN_SETTINGS).c_str());
+        case IDC_BTN_SENDFOLDER:
+            SetWindowTextW(child, LoadStr(IDS_BTN_SENDFOLDER).c_str());
             break;
         default:
             break;
@@ -971,9 +1021,9 @@ void RefreshMainWindowTexts(HWND hwnd)
     {
         SetWindowTextW(g_window.refreshButton, LoadStr(IDS_BTN_REFRESH).c_str());
     }
-    if (g_window.settingsButton != NULL)
+    if (g_window.sendFolderButton != NULL)
     {
-        SetWindowTextW(g_window.settingsButton, LoadStr(IDS_BTN_SETTINGS).c_str());
+        SetWindowTextW(g_window.sendFolderButton, LoadStr(IDS_BTN_SENDFOLDER).c_str());
     }
 
     for (size_t i = 0;
@@ -1137,7 +1187,7 @@ void LayoutMainWindow(HWND hwnd)
 
     const int margin = 7;
     const int gap = 6;
-    const int buttonWidth = 82;
+    const int minButtonWidth = 82;
     const int buttonHeight = 23;
     const int progressHeight = 14;
 
@@ -1162,13 +1212,19 @@ void LayoutMainWindow(HWND hwnd)
     MoveWindow(g_window.deviceList, margin + 8, top + 17, contentWidth - 16,
                deviceGroupHeight - 25, TRUE);
 
+    // Right aligned row between the two lists: [send file] [send folder] [refresh].
+    // Every button gets the width its own caption needs.
     int buttonY = top + deviceGroupHeight + gap;
-    int buttonX = width - margin - buttonWidth;
-    MoveWindow(g_window.settingsButton, buttonX, buttonY, buttonWidth, buttonHeight, TRUE);
-    buttonX -= (buttonWidth + gap);
-    MoveWindow(g_window.refreshButton, buttonX, buttonY, buttonWidth, buttonHeight, TRUE);
-    buttonX -= (buttonWidth + gap);
-    MoveWindow(g_window.sendButton, buttonX, buttonY, buttonWidth, buttonHeight, TRUE);
+    int refreshWidth = ButtonWidthFor(g_window.refreshButton, minButtonWidth);
+    int sendFolderWidth = ButtonWidthFor(g_window.sendFolderButton, minButtonWidth);
+    int sendWidth = ButtonWidthFor(g_window.sendButton, minButtonWidth);
+
+    int buttonX = width - margin - refreshWidth;
+    MoveWindow(g_window.refreshButton, buttonX, buttonY, refreshWidth, buttonHeight, TRUE);
+    buttonX -= (sendFolderWidth + gap);
+    MoveWindow(g_window.sendFolderButton, buttonX, buttonY, sendFolderWidth, buttonHeight, TRUE);
+    buttonX -= (sendWidth + gap);
+    MoveWindow(g_window.sendButton, buttonX, buttonY, sendWidth, buttonHeight, TRUE);
 
     int transferY = buttonY + buttonHeight + gap;
     MoveWindow(g_window.transferGroup, margin, transferY, contentWidth, transferGroupHeight, TRUE);

@@ -9,8 +9,6 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 // Icon / manifest
 
 IDI_APP             ICON            "..\\icons\\icon.ico"
-IDI_SMALL           ICON            "..\\icons\\icon.ico"
-IDI_TOOL_SEND_FOLDER ICON           "..\\icons\\send_folder.ico"
 IDI_TOOL_FROM_URL   ICON            "..\\icons\\get_from_url.ico"
 IDI_TOOL_OPEN_FOLDER ICON           "..\\icons\\get_folder.ico"
 IDI_TOOL_SETTINGS   ICON            "..\\icons\\settings.ico"
@@ -470,6 +468,7 @@ BEGIN
     IDS_HIST_OPENFAIL                "无法打开该位置：%s"
     IDS_HIST_DELETED                 "已删除 %d 条历史记录。"
     IDS_HIST_MISSING                 "（文件已不存在）"
+    IDS_BTN_SENDFOLDER               "发送文件夹(&D)"
 END
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -681,6 +680,7 @@ BEGIN
     IDS_HIST_OPENFAIL                "Cannot open this location: %s"
     IDS_HIST_DELETED                 "%d history record(s) deleted."
     IDS_HIST_MISSING                 " (file is missing)"
+    IDS_BTN_SENDFOLDER               "Send folder(&D)"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED

@@ -304,12 +304,32 @@ int TransferManager::OverallPercent() const
 {
     uint64 total = 0;
     uint64 done = 0;
+    const Transfer* newest = NULL;
+    bool haveActive = false;
 
     EnterCriticalSection(&m_cs);
     for (size_t i = 0; i < m_transfers.size(); ++i)
     {
-        total += m_transfers[i]->totalBytes;
-        done += m_transfers[i]->doneBytes;
+        const Transfer* transfer = m_transfers[i];
+        newest = transfer;
+
+        // Only transfers that are still running may contribute: a failed or
+        // cancelled transfer keeps its partial byte count forever, and adding
+        // that to the total used to pin the progress bar below 100% for every
+        // later transfer.
+        if (transfer->state == TS_WAITING || transfer->state == TS_TRANSFERRING ||
+            transfer->state == TS_PIN_REQUIRED)
+        {
+            haveActive = true;
+            total += transfer->totalBytes;
+            done += transfer->doneBytes;
+        }
+    }
+    if (!haveActive && newest != NULL)
+    {
+        // Nothing is running: show how far the most recent transfer got.
+        total = newest->totalBytes;
+        done = newest->doneBytes;
     }
     LeaveCriticalSection(&m_cs);
 

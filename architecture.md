@@ -230,13 +230,16 @@ CA 证书包 `certs\ca-bundle.crt` 与两个 OpenSSL DLL 是**随程序安装的
 - **文件结构**：`src/ui/*` 内补全托盘菜单、设置对话框、接收确认对话框、PIN 输入、分享链接对话框、拖放发送。
 - **编译方法**：`build_release.bat Win32 Release`。
 - **实现要点**：
-  - 顶部工具栏（`ToolbarWindow32`，`TBSTYLE_FLAT | TBSTYLE_LIST`）：发送文件夹、从网址接收、
-    接收文件夹、历史记录、设置、关于共 6 个按钮。图标从 EXE 内嵌的 ICO 资源加载为 32×32 的
+- 顶部工具栏（`ToolbarWindow32`，`TBSTYLE_FLAT | TBSTYLE_LIST`）：从网址接收、
+  接收文件夹、历史记录、设置、关于共 5 个按钮。图标从 EXE 内嵌的 ICO 资源加载为 32×32 的
     `ILC_COLOR32` 图像列表，保留透明通道（**图像列表顺序必须与按钮顺序一致**，
     按钮文字用 `TB_SETBUTTONINFO` 更新，注意它的 `wParam` 是命令 ID 而不是按钮下标）。
   - “帮助 > 使用说明”使用原生对话框和内置字符串，不再查找或打开 `README.md`，复制 EXE 即可使用。
   - 主窗口：菜单栏、`附近设备` 列表（名称/型号/类型/IP/最后发现）、`文件传输` 列表
     （文件名/大小/进度/速度/剩余时间/状态）、整体进度条、三栏状态栏（状态、设备数、本机信息）。
+    两个列表之间是右对齐的普通按钮行：`发送文件` / `发送文件夹` / `刷新`——发送文件夹原本在工具栏上，
+    移到按钮行后工具栏少一个按钮、高度更紧凑；`设置` 只在工具栏（以及“工具”菜单）里保留一份，
+    主窗口不再重复放一个设置按钮。
   - 传输列表的"进度"列是 `NM_CUSTOMDRAW` 自绘的进度条（`DrawEdge` 画凹陷边框 + 蓝色填充 + 居中百分比），
     就是当年迅雷/FlashGet 的样子。
   - 传输列表右键菜单：取消传输、清除已完成的传输记录。
@@ -546,11 +549,22 @@ build_installer.bat rebuild      :: 先全量重编程序，再打包
 1. **自定义消息必须放 `[CustomMessages]`**。第一版写进了 `[Messages]`，ISCC 只把它当作"覆盖内置消息"，
    对不存在的名字**静默忽略**，直到解析 `[Tasks]` 才报
    `A custom message named "FirewallTask" has not been defined.`。
-2. **Inno Setup 5 读 `.isl` 用的是 ANSI 代码页，且不接受 BOM**：
-   - UTF-8（无 BOM）→ 中文按 GBK 误解，向导里全是乱码；
-   - UTF-8 **带** BOM → 直接报 `Error on line 1 ...: Text is not inside a section`（首个字符成了 U+FEFF）。
-   所以 `prepare_isl.ps1` 把语言文件解码后**按代码页 936 重写一份**到 `output\`，再用
-   `/DZH_ISL_FILE=<那份副本>` 交给编译器；仓库里的原始 `.isl` 保持不动（UTF-8 或 ANSI 版本都能处理）。
+2. **Inno Setup 5 把 `.isl` 和 `.iss` 都当作 ANSI 文本读（且不接受 BOM）**——这是"安装程序中文乱码"
+   的真正原因，而且**踩了两次**：
+   - 第一次：`ChineseSimplified.isl` 是 UTF-8（无 BOM）→ 整个向导的中文都按 GBK 误解；
+     若给该文件加 BOM，则直接报 `Error on line 1 ...: Text is not inside a section`（首字符成了 U+FEFF）。
+   - 第二次：`.isl` 修好后用户仍报"选择附加任务那一步乱码"。那一页里的任务描述来自**脚本自己**的
+     `[CustomMessages]`（`chinese.FirewallTask=在 Windows 防火墙中放行…`），而 `LocalSendXP.iss`
+     同样是 UTF-8 无 BOM 的仓库文件 → 那一条中文被按 GBK 误解。
+     最小对照实验（同一份脚本，一份原样、一份转换后编译，用 `MsgBox(CustomMessage('Probe'))` 读回）：
+     ```
+     raw.iss       -> 鍦?Windows 闃茬伀澧欎腑鏀捐 LocalSendXP锛堜粎灞€鍩熺綉锛孴CP/UDP 53317锛?
+     converted.iss -> 在 Windows 防火墙中放行 LocalSendXP（仅局域网，TCP/UDP 53317）
+     ```
+   最终做法：`prepare_isl.ps1` 把**两类文件都**解码后按代码页 936 重写一份再交给编译器——
+   `.isl` 写到 `output\` 并用 `/DZH_ISL_FILE=` 传入，`.iss` 写到 `installer\_localized.iss`
+   （必须与原脚本同目录，否则 `Source:` 里的相对路径会解析错）编译后删除。
+   仓库里的原始 `.isl` / `.iss` 保持 UTF-8 不动，git 里也不会有 ANSI 文件。
 3. **`LanguageName` 的乱码警告**：非 Unicode 的 Setup 会把 `LanguageName=简体中文` 当作 ISO-8859-1。
    `prepare_isl.ps1` 会把该行的非 ASCII 字符改写成 Inno 建议的 `<nnnn>` 转义
    （如 `<7B80><4F53><4E2D><6587>`），警告消失、语言选择框显示正常。
