@@ -524,7 +524,7 @@ bool ServerHandler::HandlePrepareUpload(HttpContext& context)
     std::wstring saveDirectory = config.ResolvedDownloadDirectory();
     if (saveDirectory.empty())
     {
-        saveDirectory = GetModuleDirectoryW();
+        saveDirectory = GetDataDirectoryW();
     }
 
     Transfer* transfer = new Transfer();

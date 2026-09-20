@@ -1,0 +1,38 @@
+LocalSendXP - third party notices
+=================================
+
+LocalSendXP
+Unofficial LocalSend protocol client for Windows XP SP3 and later.
+Copyright (c) 2026 daisukiKaffuChino
+https://github.com/daisukiKaffuChino/LocalSendXP
+
+LocalSendXP itself is licensed under the Apache License 2.0; the full text is
+installed as "licenses\LICENSE.txt" and also ships with the source tree.  The
+attribution summary that ships next to it is "licenses\NOTICE.txt".
+
+OpenSSL
+-------
+This product includes software developed by the OpenSSL Project for use in the
+OpenSSL Toolkit (http://www.openssl.org/).
+
+The binary distribution bundles the OpenSSL 1.0.2u runtime libraries
+(libeay32.dll and ssleay32.dll) so that HTTPS works on Windows XP SP3, whose
+built-in TLS stack only speaks TLS 1.0. OpenSSL 1.0.2 is the last release line
+that still runs on Windows XP.
+
+OpenSSL is distributed under a double license: the OpenSSL License and the
+original SSLeay license. Both are BSD style licenses and both are reproduced in
+full in "licenses\LICENSE-OpenSSL.txt".
+
+CA certificates
+---------------
+The file "certs\ca-bundle.crt" is a bundle of root certificates taken from the
+Mozilla CA certificate store (as redistributed by the curl project). It is used
+to verify HTTPS peers on systems whose own root store is out of date, such as
+Windows XP SP3. The bundle is distributed under the Mozilla Public License 2.0.
+
+Protocol
+--------
+LocalSendXP speaks the LocalSend protocol, which is documented at
+https://github.com/localsend/protocol. This program is not affiliated with the
+official LocalSend project.

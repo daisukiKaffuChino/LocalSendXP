@@ -95,7 +95,7 @@ bool App::Init(HINSTANCE instance, const std::wstring& commandLine)
 
     m_config.Load();
     SetResourceLanguage(m_config.ResourceLanguageId());
-    LogInit(JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.log"));
+    LogInit(JoinPathW(GetDataDirectoryW(), L"LocalSendXP.log"));
     LogLine("---- startup: %s (port %d, fingerprint %s) ----",
             WideToUtf8(m_config.alias).c_str(), m_config.port, m_config.fingerprint.c_str());
 

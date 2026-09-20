@@ -260,7 +260,7 @@ std::wstring Config::ResolvedCertificatePath() const
     {
         return certificatePath;
     }
-    return JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.pem");
+    return JoinPathW(GetDataDirectoryW(), L"LocalSendXP.pem");
 }
 
 std::wstring Config::ResolvedCaBundlePath() const
@@ -269,6 +269,7 @@ std::wstring Config::ResolvedCaBundlePath() const
     {
         return caBundlePath;
     }
+    // The CA bundle is a shipped, read only asset, so it stays next to the exe.
     return JoinPathW(JoinPathW(GetModuleDirectoryW(), L"certs"), L"ca-bundle.crt");
 }
 

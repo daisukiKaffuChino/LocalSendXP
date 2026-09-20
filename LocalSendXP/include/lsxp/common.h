@@ -94,6 +94,12 @@ std::wstring FormatEtaW(uint64 remainingBytes, double bytesPerSecond);
 
 std::wstring GetModuleFilePathW();
 std::wstring GetModuleDirectoryW();
+// True when a new file can be created inside that directory.
+bool         DirectoryIsWritableW(const std::wstring& directory);
+// Where LocalSendXP keeps its own files: the program folder when that folder is
+// writable (portable mode, the historical behaviour), otherwise
+// %APPDATA%\LocalSendXP (installed mode, e.g. under C:\Program Files).
+std::wstring GetDataDirectoryW();
 std::wstring GetConfigFilePathW();
 std::wstring GetDefaultDownloadDirectoryW();
 std::wstring GetAppDataDirectoryW();

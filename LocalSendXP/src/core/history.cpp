@@ -132,7 +132,7 @@ HistoryStore::~HistoryStore()
 
 std::wstring HistoryStore::FilePath() const
 {
-    return JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.history");
+    return JoinPathW(GetDataDirectoryW(), L"LocalSendXP.history");
 }
 
 void HistoryStore::Load()

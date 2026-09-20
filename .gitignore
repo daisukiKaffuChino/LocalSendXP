@@ -41,6 +41,11 @@
 
 # Local runtime configuration
 LocalSendXP.ini
+LocalSendXP.history
+LocalSendXP.pem
+
+# Installer output (installer\build_installer.bat)
+/installer/output/
 
 # Visual Studio / editor state
 .vs/

@@ -884,7 +884,7 @@ std::wstring GetModuleDirectoryW()
 
 std::wstring GetConfigFilePathW()
 {
-    return JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.ini");
+    return JoinPathW(GetDataDirectoryW(), L"LocalSendXP.ini");
 }
 
 std::wstring GetAppDataDirectoryW()
@@ -898,6 +898,48 @@ std::wstring GetAppDataDirectoryW()
     return JoinPathW(GetModuleDirectoryW(), L"data");
 }
 
+bool DirectoryIsWritableW(const std::wstring& directory)
+{
+    if (directory.empty())
+    {
+        return false;
+    }
+
+    // A delete-on-close probe leaves nothing behind, not even when the process
+    // dies half way through.
+    std::wstring probe = JoinPathW(directory, L"LocalSendXP.write-test");
+    HANDLE file = CreateFileW(probe.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                              FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+    CloseHandle(file);
+    return true;
+}
+
+std::wstring GetDataDirectoryW()
+{
+    std::wstring moduleDirectory = GetModuleDirectoryW();
+
+    // An existing ini next to the exe means "portable": keep using it even when
+    // the folder could also be written to (e.g. an unpacked ZIP on a data disk).
+    if (FileExistsW(JoinPathW(moduleDirectory, L"LocalSendXP.ini")))
+    {
+        return moduleDirectory;
+    }
+    if (DirectoryIsWritableW(moduleDirectory))
+    {
+        return moduleDirectory;
+    }
+
+    // Installed under C:\Program Files and running without elevation: the
+    // program folder is read only, so all writable state goes to the profile.
+    std::wstring appData = GetAppDataDirectoryW();
+    EnsureDirectoryW(appData);
+    return appData;
+}
+
 std::wstring GetDefaultDownloadDirectoryW()
 {
     wchar_t buffer[MAX_PATH + 1];
@@ -906,7 +948,7 @@ std::wstring GetDefaultDownloadDirectoryW()
     {
         return JoinPathW(buffer, L"LocalSendXP");
     }
-    return JoinPathW(GetModuleDirectoryW(), L"Received");
+    return JoinPathW(GetDataDirectoryW(), L"Received");
 }
 
 std::string MimeTypeFromFileName(const std::string& fileNameUtf8)
