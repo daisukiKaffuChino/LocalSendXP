@@ -1129,6 +1129,35 @@ bool OpenPathWithShell(const std::wstring& path)
     return ((INT_PTR)instance > 32);
 }
 
+bool RevealPathInExplorer(const std::wstring& path)
+{
+    if (path.empty())
+    {
+        return false;
+    }
+
+    // Explorer highlights the file when it is still on disk.  "explorer.exe
+    // /select,..." is the classic (XP friendly) way of doing this.
+    if (FileExistsW(path))
+    {
+        std::wstring arguments = L"/select,\"" + path + L"\"";
+        HINSTANCE result = ShellExecuteW(NULL, L"open", L"explorer.exe",
+                                        arguments.c_str(), NULL, SW_SHOWNORMAL);
+        if ((INT_PTR)result > 32)
+        {
+            return true;
+        }
+    }
+
+    // The file is gone (or Explorer refused): at least show the folder.
+    size_t slash = path.find_last_of(L"\\/");
+    if (slash == std::wstring::npos || slash == 0)
+    {
+        return false;
+    }
+    return OpenPathWithShell(path.substr(0, slash));
+}
+
 bool CopyTextToClipboard(HWND owner, const std::wstring& text)
 {
     if (!OpenClipboard(owner))

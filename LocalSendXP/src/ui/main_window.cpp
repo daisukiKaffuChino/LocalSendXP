@@ -178,6 +178,11 @@ void OnSettings(HWND hwnd)
     ShowSettingsDialog(hwnd);
 }
 
+void OnHistory(HWND hwnd)
+{
+    ShowHistoryDialog(hwnd);
+}
+
 void OnOpenLog(HWND hwnd)
 {
     std::wstring path = LogPath();
@@ -467,19 +472,19 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
         SendMessageW(g_window.toolbar, TB_SETPADDING, 0, MAKELPARAM(8, 5));
         SendMessageW(g_window.toolbar, TB_SETMAXTEXTROWS, 1, 0);
 
-        const int buttonCount = 5;
-        const int commandIds[5] =
+        const int buttonCount = 6;
+        const int commandIds[6] =
         {
             IDM_FILE_SENDFOLDER, IDM_FILE_FROMURL, IDM_DEVICE_OPENFOLDER,
-            IDM_TOOLS_SETTINGS, IDM_HELP_ABOUT
+            IDM_TOOLS_HISTORY, IDM_TOOLS_SETTINGS, IDM_HELP_ABOUT
         };
-        const int textIds[5] =
+        const int textIds[6] =
         {
             IDS_TB_SENDFOLDER, IDS_TB_FROMURL, IDS_TB_OPENFOLDER,
-            IDS_TB_SETTINGS, IDS_TB_ABOUT
+            IDS_TB_HISTORY, IDS_TB_SETTINGS, IDS_TB_ABOUT
         };
-        // The image list holds exactly the five button icons, in this order.
-        const int imageIds[5] = { 0, 1, 2, 3, 4 };
+        // The image list holds exactly the button icons, in this order.
+        const int imageIds[6] = { 0, 1, 2, 3, 4, 5 };
 
         g_window.toolbarTexts.clear();
         g_window.toolbarTextIds.clear();
@@ -491,7 +496,7 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
             g_window.toolbarCommandIds.push_back(commandIds[i]);
         }
 
-        TBBUTTON buttons[5];
+        TBBUTTON buttons[6];
         ZeroMemory(buttons, sizeof(buttons));
         for (int i = 0; i < buttonCount; ++i)
         {
@@ -692,6 +697,10 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             OnOpenLog(hwnd);
             return 0;
 
+        case IDM_TOOLS_HISTORY:
+            OnHistory(hwnd);
+            return 0;
+
         case IDM_HELP_GUIDE:
             OnHelp(hwnd);
             return 0;
@@ -881,6 +890,8 @@ HMENU BuildMainMenu()
 
     HMENU toolsMenu = CreatePopupMenu();
     AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_SETTINGS, LoadStr(IDS_MENU_ITEM_SETTINGS).c_str());
+    AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_HISTORY, LoadStr(IDS_MENU_ITEM_HISTORY).c_str());
+    AppendMenuW(toolsMenu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_TRAY, LoadStr(IDS_MENU_ITEM_TRAY).c_str());
     AppendMenuW(toolsMenu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_AUTOSTART, LoadStr(IDS_MENU_ITEM_AUTOSTART).c_str());

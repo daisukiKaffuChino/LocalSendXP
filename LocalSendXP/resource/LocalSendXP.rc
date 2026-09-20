@@ -15,6 +15,7 @@ IDI_TOOL_FROM_URL   ICON            "..\\icons\\get_from_url.ico"
 IDI_TOOL_OPEN_FOLDER ICON           "..\\icons\\get_folder.ico"
 IDI_TOOL_SETTINGS   ICON            "..\\icons\\settings.ico"
 IDI_TOOL_ABOUT      ICON            "..\\icons\\about.ico"
+IDI_TOOL_HISTORY    ICON            "..\\icons\\history.ico"
 
 CREATEPROCESS_MANIFEST_RESOURCE_ID  RT_MANIFEST  "LocalSendXP.manifest"
 
@@ -66,6 +67,7 @@ BEGIN
     "S",            IDM_FILE_SEND,          VIRTKEY, CONTROL
     "U",            IDM_FILE_FROMURL,       VIRTKEY, CONTROL
     "O",            IDM_TOOLS_SETTINGS,     VIRTKEY, CONTROL
+    "H",            IDM_TOOLS_HISTORY,      VIRTKEY, CONTROL
     VK_ESCAPE,      IDM_TOOLS_TRAY,         VIRTKEY
 END
 
@@ -98,6 +100,23 @@ FONT 9, "宋体", 400, 0, 0x86
 BEGIN
     EDITTEXT        IDC_HELP_TEXT,8,8,344,216,ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
     DEFPUSHBUTTON   "关闭",IDCANCEL,302,231,50,14
+END
+
+/////////////////////////////////////////////////////////////////////////////
+// Receive history
+
+IDD_HISTORY DIALOGEX 0, 0, 430, 250
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "历史记录"
+FONT 9, "宋体", 400, 0, 0x86
+BEGIN
+    LTEXT           "",IDC_HIST_SUMMARY,7,6,416,10
+    CONTROL         "",IDC_HIST_LIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,20,416,182
+    LTEXT           "",IDC_HIST_HINT,7,206,416,10,SS_ENDELLIPSIS
+    DEFPUSHBUTTON   "打开所在文件夹(&O)",IDC_HIST_OPEN,146,229,84,14
+    PUSHBUTTON      "删除记录(&D)",IDC_HIST_DELETE,235,229,64,14
+    PUSHBUTTON      "清空历史(&L)",IDC_HIST_CLEAR,304,229,64,14
+    PUSHBUTTON      "关闭",IDCANCEL,373,229,50,14
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -374,7 +393,7 @@ BEGIN
     IDS_MSG_TLS_NOFINGERPRINT        "对方声明使用 HTTPS，但没有提供证书指纹，无法校验。请重新搜索设备。"
     IDS_MSG_HTTPS_DISABLED           "对方使用 HTTPS，但本机已关闭 HTTPS。请在设置中启用加密传输后重试。"
     IDS_HELP_TITLE                   "使用说明"
-    IDS_HELP_TEXT                    "1. 发送文件\r\n先在“附近设备”列表中选择接收方，然后从“文件”菜单选择“发送文件”，或把文件直接拖到主窗口。\r\n\r\n2. 发送文件夹\r\n选中接收方后，从“文件”菜单选择“发送文件夹”，程序会递归发送文件夹中的文件。\r\n\r\n3. 接收文件\r\n对方发起传输时会弹出确认窗口。勾选要接收的文件后点“接受”，文件会保存到设置中的接收文件夹。\r\n\r\n4. 从网址接收\r\n选择“文件 > 从网址接收”，粘贴对方分享的网址，然后点“确定”。\r\n\r\n5. 通过浏览器分享\r\n选择“文件 > 通过浏览器分享”，选择文件后复制生成的网址，对方可以用浏览器下载。\r\n\r\n6. 刷新设备\r\n按 F5，或选择“设备 > 刷新设备列表”，软件会重新搜索局域网设备。\r\n\r\n7. 设置\r\n在“工具 > 设置”中可以修改设备名称、设备型号、监听端口、接收 PIN 码、保存目录、系统托盘和开机启动选项。\r\n\r\n8. 加密传输（HTTPS）\r\n在“工具 > 设置 > 安全”中启用 HTTPS 加密传输。程序会自动生成证书，证书指纹显示在设置页中，可以与对方核对；只有双方都启用 HTTPS 时才会使用加密连接。"
+    IDS_HELP_TEXT                    "1. 发送文件\r\n先在“附近设备”列表中选择接收方，然后从“文件”菜单选择“发送文件”，或把文件直接拖到主窗口。\r\n\r\n2. 发送文件夹\r\n选中接收方后，从“文件”菜单选择“发送文件夹”，程序会递归发送文件夹中的文件。\r\n\r\n3. 接收文件\r\n对方发起传输时会弹出确认窗口。勾选要接收的文件后点“接受”，文件会保存到设置中的接收文件夹。\r\n\r\n4. 从网址接收\r\n选择“文件 > 从网址接收”，粘贴对方分享的网址，然后点“确定”。\r\n\r\n5. 通过浏览器分享\r\n选择“文件 > 通过浏览器分享”，选择文件后复制生成的网址，对方可以用浏览器下载。\r\n\r\n6. 刷新设备\r\n按 F5，或选择“设备 > 刷新设备列表”，软件会重新搜索局域网设备。\r\n\r\n7. 设置\r\n在“工具 > 设置”中可以修改设备名称、设备型号、监听端口、接收 PIN 码、保存目录、系统托盘和开机启动选项。\r\n\r\n8. 加密传输（HTTPS）\r\n在“工具 > 设置 > 安全”中启用 HTTPS 加密传输。程序会自动生成证书，证书指纹显示在设置页中，可以与对方核对；只有双方都启用 HTTPS 时才会使用加密连接。\r\n\r\n9. 历史记录\r\n“工具 > 历史记录”（Ctrl+H）列出接收过的文件；双击某条记录会在资源管理器中定位该文件，也可以删除记录或清空历史——只会清掉列表，磁盘上的文件不受影响。"
     IDS_ABOUT_TITLE                  "关于 LocalSend XP"
     IDS_ABOUT_AUTHOR                 "作者：GitHub @daisukiKaffuChino"
     IDS_SET_TAB_GENERAL              "常规"
@@ -433,6 +452,24 @@ BEGIN
     IDS_MENU_ITEM_HELP               "使用说明(&R)\tF1"
     IDS_MENU_ITEM_PROTOCOL           "LocalSend 协议(&P)"
     IDS_MENU_ITEM_ABOUT              "关于 LocalSend XP(&A)..."
+    IDS_HISTORY_TITLE                "历史记录"
+    IDS_TB_HISTORY                   "历史记录"
+    IDS_MENU_ITEM_HISTORY            "历史记录(&H)\tCtrl+H"
+    IDS_HIST_COL_TIME                "接收时间"
+    IDS_HIST_COL_PEER                "来源设备"
+    IDS_HIST_COL_LOCATION            "保存位置"
+    IDS_HIST_OPEN                    "打开所在文件夹(&O)"
+    IDS_HIST_DELETE                  "删除记录(&D)"
+    IDS_HIST_CLEAR                   "清空历史(&L)"
+    IDS_HIST_SUMMARY                 "共 %d 条记录"
+    IDS_HIST_EMPTY                   "还没有接收过文件。"
+    IDS_HIST_HINT                    "删除记录只清除列表，磁盘上的文件不会被删除。"
+    IDS_HIST_DELETE_CONFIRM          "确定要从历史记录中删除选中的 %d 条记录吗？\r\n\r\n磁盘上的文件不会被删除。"
+    IDS_HIST_CLEAR_CONFIRM           "确定要清空全部 %d 条历史记录吗？\r\n\r\n磁盘上的文件不会被删除。"
+    IDS_HIST_NO_SELECTION            "请先在列表中选择一条记录。"
+    IDS_HIST_OPENFAIL                "无法打开该位置：%s"
+    IDS_HIST_DELETED                 "已删除 %d 条历史记录。"
+    IDS_HIST_MISSING                 "（文件已不存在）"
 END
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -567,7 +604,7 @@ BEGIN
     IDS_MSG_TLS_NOFINGERPRINT        "The peer announces HTTPS but provides no certificate fingerprint, so it cannot be verified. Please search for devices again."
     IDS_MSG_HTTPS_DISABLED           "The peer uses HTTPS, but HTTPS is disabled on this computer. Please enable HTTPS encryption in Settings and try again."
     IDS_HELP_TITLE                   "Help"
-    IDS_HELP_TEXT                    "1. Sending files\r\nSelect a receiver in the nearby devices list, then choose File > Send file, or simply drop the files onto the main window.\r\n\r\n2. Sending a folder\r\nSelect a receiver, then choose File > Send folder; every file inside that folder is sent to the peer.\r\n\r\n3. Receiving files\r\nWhen the peer starts a transfer a confirmation window appears. Tick the files you want to keep and press Accept; they are saved to the receive folder configured in Settings.\r\n\r\n4. Receiving from a URL\r\nChoose File > Receive from URL, paste the URL shared by the peer, then press OK.\r\n\r\n5. Sharing through a browser\r\nChoose File > Share via browser, pick the files, then copy the generated URL; the peer can download them with a web browser.\r\n\r\n6. Refreshing devices\r\nPress F5, or choose Device > Refresh devices, to search the local network again.\r\n\r\n7. Settings\r\nTools > Settings changes the device name and model, the listening port, the receive PIN, the save folder, the system tray and the auto-start options.\r\n\r\n8. HTTPS encryption\r\nEnable HTTPS in Tools > Settings > Security. A certificate is generated automatically and its fingerprint is shown on the settings page so that both sides can compare it. An encrypted connection is used only when both sides have HTTPS enabled."
+    IDS_HELP_TEXT                    "1. Sending files\r\nSelect a receiver in the nearby devices list, then choose File > Send file, or simply drop the files onto the main window.\r\n\r\n2. Sending a folder\r\nSelect a receiver, then choose File > Send folder; every file inside that folder is sent to the peer.\r\n\r\n3. Receiving files\r\nWhen the peer starts a transfer a confirmation window appears. Tick the files you want to keep and press Accept; they are saved to the receive folder configured in Settings.\r\n\r\n4. Receiving from a URL\r\nChoose File > Receive from URL, paste the URL shared by the peer, then press OK.\r\n\r\n5. Sharing through a browser\r\nChoose File > Share via browser, pick the files, then copy the generated URL; the peer can download them with a web browser.\r\n\r\n6. Refreshing devices\r\nPress F5, or choose Device > Refresh devices, to search the local network again.\r\n\r\n7. Settings\r\nTools > Settings changes the device name and model, the listening port, the receive PIN, the save folder, the system tray and the auto-start options.\r\n\r\n8. HTTPS encryption\r\nEnable HTTPS in Tools > Settings > Security. A certificate is generated automatically and its fingerprint is shown on the settings page so that both sides can compare it. An encrypted connection is used only when both sides have HTTPS enabled.\r\n\r\n9. Receive history\r\nTools > History (Ctrl+H) lists the files that have been received. Double click a record to show it in Explorer; records can be deleted or cleared without touching the files on disk."
     IDS_ABOUT_TITLE                  "About LocalSend XP"
     IDS_ABOUT_AUTHOR                 "Author: GitHub @daisukiKaffuChino"
     IDS_SET_TAB_GENERAL              "General"
@@ -626,6 +663,24 @@ BEGIN
     IDS_MENU_ITEM_HELP               "&Usage help\tF1"
     IDS_MENU_ITEM_PROTOCOL           "LocalSend &protocol"
     IDS_MENU_ITEM_ABOUT              "&About LocalSend XP..."
+    IDS_HISTORY_TITLE                "History"
+    IDS_TB_HISTORY                   "History"
+    IDS_MENU_ITEM_HISTORY            "History(&H)\tCtrl+H"
+    IDS_HIST_COL_TIME                "Received at"
+    IDS_HIST_COL_PEER                "From"
+    IDS_HIST_COL_LOCATION            "Saved to"
+    IDS_HIST_OPEN                    "&Open containing folder"
+    IDS_HIST_DELETE                  "&Delete record"
+    IDS_HIST_CLEAR                   "C&lear history"
+    IDS_HIST_SUMMARY                 "%d record(s)"
+    IDS_HIST_EMPTY                   "No files have been received yet."
+    IDS_HIST_HINT                    "Deleting a record only clears the list; files on disk are kept."
+    IDS_HIST_DELETE_CONFIRM          "Delete the %d selected record(s) from the history?\r\n\r\nThe files on disk will not be deleted."
+    IDS_HIST_CLEAR_CONFIRM           "Clear all %d history record(s)?\r\n\r\nThe files on disk will not be deleted."
+    IDS_HIST_NO_SELECTION            "Please select a record in the list first."
+    IDS_HIST_OPENFAIL                "Cannot open this location: %s"
+    IDS_HIST_DELETED                 "%d history record(s) deleted."
+    IDS_HIST_MISSING                 " (file is missing)"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED

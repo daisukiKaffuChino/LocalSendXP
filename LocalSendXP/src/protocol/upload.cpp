@@ -1,5 +1,6 @@
 #include "lsxp/protocol.h"
 #include "lsxp/app.h"
+#include "lsxp/history.h"
 #include "lsxp/sha256.h"
 #include "resource.h"
 
@@ -770,6 +771,23 @@ bool ServerHandler::HandleUpload(HttpContext& context)
     if (expectedSize != 0 && expectedSize != received)
     {
         LogLine("received %I64u bytes, expected %I64u for %s", received, expectedSize, fileId.c_str());
+    }
+
+    // Remember the saved file so that it can be found again from the history
+    // window ("open containing folder").
+    {
+        std::string alias;
+        std::string peerIp = m_clientIp;
+        Transfer* record = app.Transfers().Find(transferId);
+        if (record != NULL)
+        {
+            alias = record->peerAlias;
+            if (!record->peerIp.empty())
+            {
+                peerIp = record->peerIp;
+            }
+        }
+        HistoryStore::Instance().AddReceived(alias, peerIp, targetPath, received);
     }
 
     app.Transfers().SetFileProgress(transferId, fileIndex, received, true);

@@ -98,6 +98,7 @@ void TrayShowMenu(HWND owner)
     AppendMenuW(menu, MF_STRING, IDM_DEVICE_OPENFOLDER, LoadStr(IDS_MENU_OPENFOLDER).c_str());
     AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(menu, MF_STRING, IDM_TOOLS_SETTINGS, LoadStr(IDS_MENU_SETTINGS).c_str());
+    AppendMenuW(menu, MF_STRING, IDM_TOOLS_HISTORY, LoadStr(IDS_MENU_ITEM_HISTORY).c_str());
     AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(menu, MF_STRING, IDM_FILE_EXIT, LoadStr(IDS_MENU_EXIT).c_str());
 

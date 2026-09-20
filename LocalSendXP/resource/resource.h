@@ -10,6 +10,7 @@
 #define IDI_TOOL_OPEN_FOLDER            107
 #define IDI_TOOL_SETTINGS               108
 #define IDI_TOOL_ABOUT                  109
+#define IDI_TOOL_HISTORY                110
 
 #define IDD_ABOUT                       110
 #define IDD_SETTINGS                    111
@@ -22,6 +23,7 @@
 #define IDD_SETTINGS_TRANSFER           121
 #define IDD_SETTINGS_NETWORK            122
 #define IDD_SETTINGS_SECURITY           123
+#define IDD_HISTORY                     124
 
 // ---- string table -------------------------------------------------------
 #define IDS_APP_TITLE                   200
@@ -224,6 +226,24 @@
 #define IDS_HELP_TEXT                   335
 #define IDS_ABOUT_TITLE                 420
 #define IDS_ABOUT_AUTHOR                421
+#define IDS_HISTORY_TITLE               422
+#define IDS_HIST_COL_TIME               423
+#define IDS_HIST_COL_PEER               424
+#define IDS_HIST_COL_LOCATION           425
+#define IDS_HIST_OPEN                   426
+#define IDS_HIST_DELETE                 427
+#define IDS_HIST_CLEAR                  428
+#define IDS_HIST_SUMMARY                429
+#define IDS_HIST_EMPTY                  430
+#define IDS_HIST_HINT                   431
+#define IDS_HIST_DELETE_CONFIRM         432
+#define IDS_HIST_CLEAR_CONFIRM          433
+#define IDS_HIST_NO_SELECTION           434
+#define IDS_HIST_OPENFAIL               435
+#define IDS_HIST_DELETED                436
+#define IDS_HIST_MISSING                437
+#define IDS_TB_HISTORY                  438
+#define IDS_MENU_ITEM_HISTORY           439
 
 // ---- commands -----------------------------------------------------------
 #define IDM_FILE_SEND                   40001
@@ -238,6 +258,7 @@
 #define IDM_TOOLS_TRAY                  40021
 #define IDM_TOOLS_AUTOSTART             40022
 #define IDM_TOOLS_LOG                   40023
+#define IDM_TOOLS_HISTORY               40024
 #define IDM_HELP_PROTOCOL               40030
 #define IDM_HELP_GUIDE                  40031
 #define IDM_HELP_ABOUT                  40032
@@ -321,3 +342,9 @@
 #define IDC_ABOUT_PROTOCOL              1107
 #define IDC_ABOUT_CREDIT                1108
 #define IDC_PIN_INFO                    1109
+#define IDC_HIST_LIST                   1110
+#define IDC_HIST_SUMMARY                1111
+#define IDC_HIST_OPEN                   1112
+#define IDC_HIST_DELETE                 1113
+#define IDC_HIST_CLEAR                  1114
+#define IDC_HIST_HINT                   1115

@@ -25,6 +25,7 @@ long   SelectedTransferId(HWND hwnd);
 bool ShowSettingsDialog(HWND parent);
 bool ShowAboutDialog(HWND parent);
 bool ShowHelpDialog(HWND parent);
+bool ShowHistoryDialog(HWND parent);
 int  ShowReceiveDialog(HWND parent, IncomingPrompt* prompt);
 bool ShowPinDialog(HWND parent, std::string& pin);
 void ShowShareDialog(HWND parent, const std::wstring& url);

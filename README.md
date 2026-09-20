@@ -69,10 +69,18 @@ LocalSendXP/                       解决方案根目录
 
 ```bat
 cd LocalSendXP\build
-build_release.bat            :: 默认 Release|Win32
+build_release.bat            :: 默认 Release|Win32（命令行下跑完就退出）
 build_release.bat Win32 Debug
 build_release.bat x64 Release
+build_release.bat Win32 Release rebuild   :: 强制全量重新生成
 ```
+
+**双击 `build_release.bat` 也可以**：脚本发现没有参数（说明是从资源管理器双击的）时，
+会在结束前 `pause`，窗口不会一闪而过；带参数运行时不会停，方便脚本调用。
+
+`vcbuild` 是增量构建，没有任何源文件改动时会输出 `LocalSendXP - 最新`（英文工具链是
+`up to date`）并在 1 秒内返回——这不是失败。想强制重新编译就加上第三个参数 `rebuild`
+（内部是 `vcbuild /rebuild`）。
 
 工程里刻意做了三处与"现代默认值"不同的设置，都是为了 XP 与脚本化构建：
 
@@ -169,8 +177,9 @@ build_release.bat x64 Release
 - **编译方法**：`build_release.bat Win32 Release`。
 - **实现要点**：
   - 顶部工具栏（`ToolbarWindow32`，`TBSTYLE_FLAT | TBSTYLE_LIST`）：发送文件夹、从网址接收、
-    接收文件夹、设置、关于共 5 个按钮。图标从 EXE 内嵌的 ICO 资源加载为 32×32 的
-    `ILC_COLOR32` 图像列表，保留透明通道。
+    接收文件夹、历史记录、设置、关于共 6 个按钮。图标从 EXE 内嵌的 ICO 资源加载为 32×32 的
+    `ILC_COLOR32` 图像列表，保留透明通道（**图像列表顺序必须与按钮顺序一致**，
+    按钮文字用 `TB_SETBUTTONINFO` 更新，注意它的 `wParam` 是命令 ID 而不是按钮下标）。
   - “帮助 > 使用说明”使用原生对话框和内置字符串，不再查找或打开 `README.md`，复制 EXE 即可使用。
   - 主窗口：菜单栏、`附近设备` 列表（名称/型号/类型/IP/最后发现）、`文件传输` 列表
     （文件名/大小/进度/速度/剩余时间/状态）、整体进度条、三栏状态栏（状态、设备数、本机信息）。
@@ -365,6 +374,42 @@ HTTPS 开启时，同一个端口既服务 TLS 客户端也服务明文客户端
   这一条建议在真机上与手机端各测一次。
 - 「从网址接收」对 `https://` 的公开站点使用 CA bundle 校验；对 LocalSend 的自签证书，
   要么走指纹固定（通过设备列表发送），要么由用户显式打开「允许不安全的 HTTPS」。
+
+## 接收历史（History）
+
+每接收完成一个文件就记一条历史，方便事后找回「刚收到的那张图存到哪去了」。
+
+- **文件结构**：新增 `include/lsxp/history.h`、`src/core/history.cpp`（存储）、
+  `src/ui/dialog_history.cpp`（对话框）；资源里新增 `IDD_HISTORY`、`IDI_TOOL_HISTORY`
+  （`icons\history.ico`）以及中英双份字符串。
+- **入口**：`工具 → 历史记录(&H)...`（快捷键 `Ctrl+H`）、工具栏第 4 个按钮（历史图标）、
+  托盘右键菜单。工具栏按钮的命令 ID 与菜单项相同（`IDM_TOOLS_HISTORY`），因此三处共用一份处理逻辑。
+- **存储**：程序目录下 `LocalSendXP.history`，UTF-8 纯文本，一行一条，字段用 Tab 分隔：
+  `时间 / 来源设备 / 来源 IP / 字节数 / 文件名 / 保存路径`。用记事本就能看，最多保留 500 条
+  （超出后丢弃最旧的）。写入用 `CreateFile` / `WriteFile`，与其余文件操作一致；没有引入
+  JSON、数据库或任何新依赖。
+- **列表**：`SysListView32`（报表模式、整行选中、网格线），列为「接收时间 / 来源设备 /
+  文件名 / 大小 / 保存位置」；文件已经被删掉时在「保存位置」后面追加「（文件已不存在）」。
+- **操作**：
+  | 操作 | 行为 |
+  | --- | --- |
+  | 打开所在文件夹（双击 / 右键 / 按钮） | `explorer.exe /select,"<文件>"`，在资源管理器中选中该文件；文件已删则退化为打开上级目录 |
+  | 删除记录（支持多选） | 只删除历史条目，**磁盘上的文件不动**，确认框里写明这一点 |
+  | 清空历史 | 同上，清掉全部条目 |
+- **线程**：接收完成发生在 HTTP 线程，历史存储内部用 `CRITICAL_SECTION` 互斥，写盘后立即返回；
+  对话框只在 UI 线程读写。
+- **XP 兼容**：`explorer /select` 与 `SysListView32` 在 XP 上都可用；对话框按钮宽度按各自
+  字体测量后再布局，英文不再被裁掉；窗口可缩放，最小尺寸在 `WM_GETMINMAXINFO` 里限制。
+
+已实测（本机，走完整的 LocalSend v2 流程）：
+
+1. 用 `POST /api/localsend/v2/prepare-upload` + `/upload` 真实发送一个文件 → 文件落盘 32 字节，
+   `LocalSendXP.history` 出现一条
+   `2026-09-20 14:51:44 | TestSender | 127.0.0.1 | 32 | history_test.txt | <完整路径>`；
+2. 打开「历史记录」：标题、说明、4 个按钮、表头都是当前语言，列表 1 行，摘要显示「共 1 条记录」；
+3. 选中该行 → 删除记录 → 确认框文案正确 → 列表变 0 行、摘要变「还没有接收过文件。」、
+   `LocalSendXP.history` 变空，**而接收到的文件仍在磁盘上**；
+4. 英文界面下重跑一遍：按钮宽度分别为 171 / 114 / 108 / 75 px，逐控件量文本宽度均未裁剪。
 
 ## XP 兼容注意事项汇总
 

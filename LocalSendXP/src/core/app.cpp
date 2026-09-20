@@ -1,5 +1,6 @@
 #include "lsxp/app.h"
 #include "lsxp/ui.h"
+#include "lsxp/history.h"
 #include "lsxp/sha256.h"
 #include "resource.h"
 
@@ -97,6 +98,8 @@ bool App::Init(HINSTANCE instance, const std::wstring& commandLine)
     LogInit(JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.log"));
     LogLine("---- startup: %s (port %d, fingerprint %s) ----",
             WideToUtf8(m_config.alias).c_str(), m_config.port, m_config.fingerprint.c_str());
+
+    HistoryStore::Instance().Load();
 
     if (!StartServices(errorText))
     {

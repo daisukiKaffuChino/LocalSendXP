@@ -110,6 +110,8 @@ std::wstring GetLocalComputerNameW();
 bool SetAutoStart(bool enable, std::string* errorText);
 bool GetAutoStart();
 bool OpenPathWithShell(const std::wstring& path);
+// Opens the containing folder with the file selected (Explorer /select).
+bool RevealPathInExplorer(const std::wstring& path);
 bool CopyTextToClipboard(HWND owner, const std::wstring& text);
 
 // ---- UI strings ---------------------------------------------------------

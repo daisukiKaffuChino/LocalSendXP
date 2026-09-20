@@ -356,6 +356,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\core\history.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\core\transfer.cpp"
 					>
 				</File>
@@ -436,6 +440,10 @@
 				</File>
 				<File
 					RelativePath=".\src\ui\dialog_help.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\ui\dialog_history.cpp"
 					>
 				</File>
 				<File
@@ -532,6 +540,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\lsxp\history.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\lsxp\json.h"
 				>
 			</File>
@@ -575,6 +587,10 @@
 			</File>
 			<File
 				RelativePath=".\icons\get_from_url.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\icons\history.ico"
 				>
 			</File>
 			<File
