@@ -404,6 +404,18 @@ bool TlsContext::Start(const std::wstring& certificatePath,
 
     api.SSL_CTX_ctrl(client, SSL_CTRL_OPTIONS, (long)options, NULL);
     api.SSL_CTX_ctrl(server, SSL_CTRL_OPTIONS, (long)options, NULL);
+
+    // OpenSSL 1.0.2 does not select an ECDHE curve on its own when acting as a
+    // server: without this call it cannot use any of the ECDHE suites in
+    // kCipherList and rejects every client with
+    // "ssl3_get_client_hello:no shared cipher" (which the peer sees as
+    // "received fatal alert: HandshakeFailure").  This is exactly what the
+    // official LocalSend apps, built on rustls, ran into when sending to us.
+    // With ecdh auto enabled the server picks a curve from the client's
+    // supported_groups list, so rustls (P-256 / X25519) and OpenSSL peers both
+    // work.
+    api.SSL_CTX_ctrl(server, SSL_CTRL_SET_ECDH_AUTO, 1, NULL);
+
     api.SSL_CTX_set_cipher_list(client, kCipherList);
     api.SSL_CTX_set_cipher_list(server, kCipherList);
     api.SSL_CTX_set_verify_depth(client, 9);

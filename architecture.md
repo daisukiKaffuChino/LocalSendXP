@@ -584,6 +584,29 @@ build_installer.bat rebuild      :: 先全量重编程序，再打包
    （用 `FileVersionInfo` 读 `LocalSendXP-1.0.0-setup.exe` 实测：
    `ProductName=LocalSendXP`、`CompanyName=daisukiKaffuChino`、`LegalCopyright=Copyright © 2026 daisukiKaffuChino`）。
 
+7. **手机发不进来：`no shared cipher`（最隐蔽的一个）**。现象是官方手机版报
+   `error sending request for url (https://<本机IP>:53317/api/localsend/v2/prepare-upload):
+   client error (Connect): received fatal alert: HandshakeFailure`——这是**手机端**的提示，但
+   `HandshakeFailure` 是**我们服务端**回给它的，"received" 说明客户端收到了我们的致命告警。
+   服务端日志给出了原始原因：
+   ```
+   TLS handshake with 192.168.1.x failed: HTTPS handshake failed:
+   SSL_accept: error:1408A0C1:SSL routines:ssl3_get_client_hello:no shared cipher
+   ```
+   原因：`kCipherList` 里**全是 ECDHE 套件**（这是对的，rustls 只支持 AEAD + ECDHE），
+   但 **OpenSSL 1.0.2 在服务端角色下不会自动选曲线**——必须显式打开 ecdh auto，
+   否则服务端拿不出任何可用套件，只能回 handshake_failure。加一句即可：
+   ```cpp
+   api.SSL_CTX_ctrl(server, SSL_CTRL_SET_ECDH_AUTO, 1, NULL);   // SSL_CTRL_SET_ECDH_AUTO = 94
+   ```
+   也解释了那个奇怪的不对称：我们是**客户端**时（电脑发给手机）不需要这一步，所以只有
+   "手机发给电脑"会失败。验证方式：用 Python 的 OpenSSL 3 客户端把加密套件限制成
+   rustls 的那几个（TLS1.2 + 仅 AEAD）去连本机，修复前 `sslv3 alert handshake failure`，
+   修复后 `TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256`，服务端日志变成
+   `HTTPS accepted from ... TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256`。
+   （顺带记下另一个易混淆点：装到 Program Files 后数据目录回退到 `%APPDATA%\LocalSendXP`，
+   看日志要去那里看，而不是 exe 目录。）
+
 ### 已验证 / 未验证
 
 - 已验证：`build_installer.bat` 能正确取到版本号（1.0.0）、载荷校验、ISCC 定位与
