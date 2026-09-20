@@ -72,20 +72,20 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // About
 
-IDD_ABOUT DIALOGEX 0, 0, 340, 190
+IDD_ABOUT DIALOGEX 0, 0, 340, 180
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "关于 LocalSend XP"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
     ICON            IDI_APP,IDC_STATIC,14,14,21,20
-    LTEXT           "LocalSend XP 1.0.0",IDC_STATIC,60,13,266,10,SS_NOPREFIX
-    LTEXT           "非官方 LocalSend 协议客户端",IDC_STATIC,60,26,266,10
-    LTEXT           "LocalSend XP 是 LocalSend 协议的非官方 Windows 客户端，面向 Windows XP SP3 及更高版本。",IDC_STATIC,60,46,266,26,SS_NOPREFIX
-    LTEXT           "支持的协议版本：LocalSend Protocol v2.2（同时兼容 v1）",IDC_STATIC,60,75,266,20
-    LTEXT           "本项目与 LocalSend 官方项目无关。协议参考：github.com/localsend/protocol",IDC_STATIC,60,96,266,26
+    LTEXT           "",IDC_ABOUT_NAME,60,13,266,10,SS_NOPREFIX
+    LTEXT           "",IDC_ABOUT_SUBTITLE,60,26,266,10
+    LTEXT           "",IDC_ABOUT_INFO,60,46,266,26,SS_NOPREFIX
+    LTEXT           "",IDC_ABOUT_PROTOCOL,60,75,266,20
+    LTEXT           "",IDC_ABOUT_CREDIT,60,96,266,26
     LTEXT           "作者：GitHub @daisukiKaffuChino",IDC_ABOUT_AUTHOR,60,124,266,10
-    PUSHBUTTON      "开源仓库(&G)",IDC_ABOUT_SOURCE,208,169,62,14
-    DEFPUSHBUTTON   "确定",IDOK,276,169,50,14
+    PUSHBUTTON      "开源仓库(&G)",IDC_ABOUT_SOURCE,208,159,62,14
+    DEFPUSHBUTTON   "确定",IDOK,276,159,50,14
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -103,32 +103,84 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // Settings
 
-IDD_SETTINGS DIALOGEX 0, 0, 291, 224
+IDD_SETTINGS DIALOGEX 0, 0, 346, 304
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "设置"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
-    LTEXT           "设备名称：",IDC_STATIC,7,12,50,10
-    EDITTEXT        IDC_SET_ALIAS,60,10,130,13,ES_AUTOHSCROLL
-    LTEXT           "本机类型：",IDC_STATIC,7,30,50,10
-    COMBOBOX        IDC_SET_TYPE,60,28,130,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "设备型号：",IDC_STATIC,7,48,50,10
-    EDITTEXT        IDC_SET_MODEL,60,46,130,13,ES_AUTOHSCROLL
-    LTEXT           "监听端口：",IDC_STATIC,7,66,50,10
-    EDITTEXT        IDC_SET_PORT,60,64,60,13,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "接收 PIN 码：",IDC_STATIC,7,84,50,10
-    EDITTEXT        IDC_SET_PIN,60,82,60,13,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "(留空表示不需要 PIN)",IDC_STATIC,126,84,120,10
-    LTEXT           "接收文件保存到：",IDC_STATIC,7,102,50,10
-    EDITTEXT        IDC_SET_DIR,60,100,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "浏览(&B)...",IDC_SET_BROWSE,239,100,45,13
-    CONTROL         "收到文件时先询问我(&A)",IDC_SET_ASK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,122,200,10
-    CONTROL         "接收完成后打开保存文件夹(&O)",IDC_SET_OPENAFTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,136,200,10
-    CONTROL         "关闭窗口时最小化到系统托盘(&T)",IDC_SET_TRAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,150,200,10
-    CONTROL         "开机时自动启动(&S)",IDC_SET_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,164,200,10
-    LTEXT           "设置的改变会立即生效；端口修改后需要重新启动程序。",IDC_STATIC,7,186,277,10
-    DEFPUSHBUTTON   "确定",IDOK,179,202,50,14
-    PUSHBUTTON      "取消",IDCANCEL,234,202,50,14
+    CONTROL         "",IDC_SET_TABS,"SysTabControl32",WS_TABSTOP,7,7,332,258
+    LTEXT           "设置的改变会立即生效；端口与加密设置的修改需要重新启动程序。",IDC_SET_NOTE,7,270,332,20
+    DEFPUSHBUTTON   "确定",IDOK,236,286,50,14
+    PUSHBUTTON      "取消",IDCANCEL,289,286,50,14
+END
+
+/////////////////////////////////////////////////////////////////////////////
+// Settings pages
+
+IDD_SETTINGS_GENERAL DIALOGEX 0, 0, 318, 232
+STYLE DS_SETFONT | WS_CHILD
+FONT 9, "宋体", 400, 0, 0x86
+BEGIN
+    GROUPBOX        "本机标识",IDC_GRP_DEVICE,7,7,304,96
+    LTEXT           "设备名称：",IDC_LBL_ALIAS,16,24,110,10
+    EDITTEXT        IDC_SET_ALIAS,132,22,120,13,ES_AUTOHSCROLL
+    LTEXT           "本机类型：",IDC_LBL_TYPE,16,44,110,10
+    COMBOBOX        IDC_SET_TYPE,132,42,120,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "设备型号：",IDC_LBL_MODEL,16,64,110,10
+    EDITTEXT        IDC_SET_MODEL,132,62,120,13,ES_AUTOHSCROLL
+    LTEXT           "界面语言：",IDC_LBL_LANGUAGE,16,84,110,10
+    COMBOBOX        IDC_SET_LANGUAGE,132,82,120,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "启动与托盘",IDC_GRP_BEHAVIOR,7,109,304,58
+    CONTROL         "开机时自动启动(&S)",IDC_SET_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,124,288,10
+    CONTROL         "关闭窗口时最小化到系统托盘(&T)",IDC_SET_TRAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,142,288,10
+END
+
+IDD_SETTINGS_TRANSFER DIALOGEX 0, 0, 318, 232
+STYLE DS_SETFONT | WS_CHILD
+FONT 9, "宋体", 400, 0, 0x86
+BEGIN
+    GROUPBOX        "接收文件",IDC_GRP_FILES,7,7,304,82
+    LTEXT           "接收文件保存到：",IDC_LBL_DIR,16,24,110,10
+    EDITTEXT        IDC_SET_DIR,132,22,96,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "浏览(&B)...",IDC_SET_BROWSE,232,22,72,13
+    CONTROL         "收到文件时先询问我(&A)",IDC_SET_ASK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,46,288,10
+    CONTROL         "接收完成后打开保存文件夹(&O)",IDC_SET_OPENAFTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,64,288,10
+    GROUPBOX        "传输保护",IDC_GRP_PROTECT,7,95,304,56
+    LTEXT           "接收 PIN 码：",IDC_LBL_PIN,16,112,110,10
+    EDITTEXT        IDC_SET_PIN,132,110,60,13,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "（留空表示不需要 PIN）",IDC_LBL_PIN_HINT,200,112,112,10
+END
+
+IDD_SETTINGS_NETWORK DIALOGEX 0, 0, 318, 232
+STYLE DS_SETFONT | WS_CHILD
+FONT 9, "宋体", 400, 0, 0x86
+BEGIN
+    GROUPBOX        "端口与公告",IDC_GRP_NET,7,7,304,96
+    LTEXT           "监听端口：",IDC_LBL_PORT,16,24,110,10
+    EDITTEXT        IDC_SET_PORT,132,22,60,13,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "公告间隔（秒）：",IDC_LBL_ANNOUNCE,16,46,110,10
+    EDITTEXT        IDC_SET_ANNOUNCE,132,44,60,13,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "本机地址：",IDC_LBL_ADDR,16,70,110,10
+    LTEXT           "",IDC_SET_DEVICE_INFO,132,70,172,10
+END
+
+IDD_SETTINGS_SECURITY DIALOGEX 0, 0, 318, 232
+STYLE DS_SETFONT | WS_CHILD
+FONT 9, "宋体", 400, 0, 0x86
+BEGIN
+    GROUPBOX        "加密传输（HTTPS）",IDC_GRP_TLS,7,7,304,112
+    CONTROL         "启用 HTTPS 加密传输(&E)",IDC_SET_HTTPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,22,288,10
+    CONTROL         "允许 TLS 1.0/1.1 回退（兼容旧设备）(&L)",IDC_SET_LEGACY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,38,288,10
+    CONTROL         "允许不安全的 HTTPS（不校验证书，不推荐）(&I)",IDC_SET_INSECURE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,54,288,10
+    CONTROL         "要求对方提供客户端证书(&R)",IDC_SET_CLIENTCERT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,70,288,10
+    LTEXT           "证书指纹：",IDC_LBL_FP,16,90,110,10
+    LTEXT           "",IDC_SET_FINGERPRINT,132,88,172,22
+    GROUPBOX        "证书文件",IDC_GRP_CERT,7,133,304,78
+    LTEXT           "证书文件：",IDC_LBL_CERT,16,150,110,10
+    LTEXT           "",IDC_SET_CERT,132,150,172,10
+    LTEXT           "CA 证书包：",IDC_LBL_CA,16,170,110,10
+    EDITTEXT        IDC_SET_CABUNDLE,132,168,86,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "浏览文件(&F)...",IDC_SET_CA_BROWSE,222,168,82,13
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -153,7 +205,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "输入 PIN 码"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
-    LTEXT           "接收方要求输入 PIN 码，请输入 6 位数字：",IDC_STATIC,8,10,208,18
+    LTEXT           "接收方要求输入 PIN 码，请输入 6 位数字：",IDC_PIN_INFO,8,10,208,18
     EDITTEXT        IDC_PIN_EDIT,8,34,208,13,ES_AUTOHSCROLL | ES_NUMBER
     DEFPUSHBUTTON   "确定",IDOK,112,68,50,14
     PUSHBUTTON      "取消",IDCANCEL,167,68,50,14
@@ -167,9 +219,9 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "从网址接收"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
-    LTEXT           "请输入对方分享的网址：",IDC_STATIC,8,10,252,10
+    LTEXT           "请输入对方分享的网址：",IDC_URL_INFO,8,10,252,10
     EDITTEXT        IDC_URL_EDIT,8,26,252,13,ES_AUTOHSCROLL
-    LTEXT           "例如：http://192.168.1.5:53317",IDC_STATIC,8,44,252,10
+    LTEXT           "例如：http://192.168.1.5:53317",IDC_URL_HINT,8,44,252,10
     DEFPUSHBUTTON   "确定",IDOK,156,76,50,14
     PUSHBUTTON      "取消",IDCANCEL,210,76,50,14
 END
@@ -180,7 +232,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "通过浏览器分享"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
-    LTEXT           "在接收方的浏览器中打开下面的网址即可下载文件：",IDC_STATIC,8,10,304,10
+    LTEXT           "在接收方的浏览器中打开下面的网址即可下载文件：",IDC_SHARE_INFO,8,10,304,10
     EDITTEXT        IDC_SHARE_URL,8,26,304,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "复制(&C)",IDC_SHARE_COPY,200,66,55,14
     DEFPUSHBUTTON   "关闭",IDCANCEL,257,66,55,14
@@ -189,129 +241,411 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // String table
 
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "LocalSend XP"
-    IDS_APP_SUBTITLE        "非官方 LocalSend 协议客户端"
-    IDS_STATUS_ONLINE       "已连接到局域网"
-    IDS_STATUS_OFFLINE      "网络未连接"
-    IDS_STATUS_SCANNING     "正在搜索局域网设备，请稍候……"
-    IDS_STATUS_LISTENING    "正在监听端口 %d"
-    IDS_STATUS_DEVFMT       "%d 台设备在线"
-    IDS_STATUS_SELFFMT      "本机：%s（%s:%d）"
-    IDS_GROUP_DEVICES       "附近设备"
-    IDS_GROUP_TRANSFERS     "文件传输"
-    IDS_COL_NAME            "名称"
-    IDS_COL_MODEL           "设备型号"
-    IDS_COL_TYPE            "类型"
-    IDS_COL_ADDR            "IP 地址"
-    IDS_COL_SEEN            "最后发现"
-    IDS_COL_FILE            "文件名"
-    IDS_COL_SIZE            "大小"
-    IDS_COL_PROGRESS        "进度"
-    IDS_COL_SPEED           "速度"
-    IDS_COL_ETA             "剩余时间"
-    IDS_COL_STATE           "状态"
-    IDS_COL_DIR             "方向"
-    IDS_BTN_SEND            "发送文件(&S)"
-    IDS_BTN_REFRESH         "刷新(&R)"
-    IDS_BTN_SETTINGS        "设置(&T)"
-    IDS_TYPE_MOBILE         "移动设备"
-    IDS_TYPE_DESKTOP        "桌面电脑"
-    IDS_TYPE_WEB            "网页浏览器"
-    IDS_TYPE_HEADLESS       "无界面程序"
-    IDS_TYPE_SERVER         "服务器"
-    IDS_TYPE_UNKNOWN        "未知设备"
-    IDS_DIR_SEND            "发送"
-    IDS_DIR_RECV            "接收"
-    IDS_ST_WAITING          "等待对方确认"
-    IDS_ST_TRANSFER         "传输中"
-    IDS_ST_DONE             "已完成"
-    IDS_ST_FAILED           "失败"
-    IDS_ST_CANCELED         "已取消"
-    IDS_ST_DENIED           "对方拒绝接收"
-    IDS_ST_PINWAIT          "等待 PIN 码"
-    IDS_ST_BLOCKED          "对方正忙"
-    IDS_ST_FOLDER           "文件夹"
-    IDS_MSG_SELECT_DEVICE   "请先在「附近设备」列表中选择接收方。"
-    IDS_MSG_NO_FILES        "没有选择任何文件。"
-    IDS_MSG_SENDFAIL        "发送失败：%s"
-    IDS_MSG_OPENFOLDER_FAIL "无法打开文件夹：%s"
-    IDS_MSG_PORTBUSY        "端口 %d 被占用，接收服务未能启动。请在「设置」中更换端口。"
-    IDS_MSG_TRAYHINT        "LocalSend XP 正在后台运行，双击图标可以重新打开窗口。"
-    IDS_MSG_RESTART_REQUIRED "端口设置的改变将在重新启动程序后生效。"
-    IDS_MSG_NOTIFY_TITLE    "LocalSend XP"
-    IDS_MSG_RECEIVED        "已接收 %d 个文件，保存在：%s"
-    IDS_MSG_RECEIVED_PARTIAL "已接收 %d 个文件，其中 %d 个失败。"
-    IDS_MSG_TRANSFER_SENT   "已向 %s 发送 %d 个文件。"
-    IDS_MSG_SENT_TO         "正在向 %s 发送 %d 个文件（共 %s）"
-    IDS_MSG_PIN_REQUIRED    "对方要求输入 PIN 码。"
-    IDS_MSG_DEVICE_BUSY     "对方正在与其它设备传输，请稍后再试。"
-    IDS_MSG_REJECTED        "对方拒绝了这次传输。"
-    IDS_MSG_NONAME          "设备名称不能为空。"
-    IDS_MSG_BADNAME         "设备名称中含有非法字符，请重新输入。"
-    IDS_MSG_PATH_TOO_LONG   "路径太长，无法处理。"
-    IDS_MSG_SAVE_FAIL       "无法写入文件：%s"
-    IDS_MSG_SHARE_EMPTY     "没有可以分享的文件。"
-    IDS_MSG_SECURITY        "同一时间只允许一个传输会话。"
-    IDS_MSG_FOLDER_SKIP     "文件夹「%s」无法发送，已跳过。"
-    IDS_FILTER_FILES        "所有文件 (*.*)"
-    IDS_TITLE_SFILES        "选择要发送的文件"
-    IDS_TITLE_SFOLDER       "选择要发送的文件夹"
-    IDS_RECEIVE_TITLE       "接收文件"
-    IDS_FMT_RECEIVE_INFO    "%s（%s）想要发送 %d 个文件，共 %s："
-    IDS_RECEIVE_ACCEPT      "接受(&A)"
-    IDS_RECEIVE_DENY        "拒绝(&D)"
-    IDS_PIN_TITLE           "输入 PIN 码"
-    IDS_PIN_INFO            "接收方要求输入 PIN 码，请输入 6 位数字："
-    IDS_PIN_WRONG           "PIN 码不正确，请重新输入。"
-    IDS_SETTINGS_TITLE      "设置"
-    IDS_SET_ERR_PORT        "端口号无效，请输入 1024 到 65535 之间的数字。"
-    IDS_SET_ERR_DIR         "保存文件夹不存在，是否现在创建？"
-    IDS_SHARE_TITLE         "通过浏览器分享"
-    IDS_SHARE_COPIED        "网址已复制到剪贴板。"
-    IDS_ABOUT_INFO          "LocalSend XP 是 LocalSend 协议的非官方 Windows 客户端，面向 Windows XP SP3 及更高版本。"
-    IDS_ABOUT_PROTOCOL      "支持的协议版本：LocalSend Protocol v2.2（同时兼容 v1）"
-    IDS_ABOUT_CREDIT        "本项目与 LocalSend 官方项目无关。协议参考：github.com/localsend/protocol"
-    IDS_LOG_OPENFAIL        "无法打开日志文件。"
-    IDS_MENU_SHOW           "显示主窗口(&O)"
-    IDS_MENU_SEND           "发送文件(&S)..."
-    IDS_MENU_OPENFOLDER     "打开接收文件夹(&F)"
-    IDS_MENU_SETTINGS       "设置(&T)..."
-    IDS_MENU_EXIT           "退出(&X)"
-    IDS_MSG_CANCEL_TRANSFER "取消传输(&C)"
-    IDS_MSG_NO_ACTIVE_TRANSFER "这条传输已经结束。"
-    IDS_TIME_JUSTNOW        "刚刚"
-    IDS_TIME_SECONDS_AGO    "%d 秒前"
-    IDS_TIME_MINUTES_AGO    "%d 分钟前"
-    IDS_FONT_FACE           "宋体"
-    IDS_BROWSE_TITLE        "请选择文件夹"
-    IDS_ETA_LESS_SEC        "< 1 秒"
-    IDS_ETA_SECONDS         "%.0f 秒"
-    IDS_ETA_MINUTE_SECOND   "%.0f 分 %.0f 秒"
-    IDS_ETA_HOUR_MINUTE     "%.0f 小时 %.0f 分"
-    IDS_WEB_EMPTY           "当前没有正在分享的文件。"
-    IDS_WEB_STALE           "指定的会话不存在，下面是当前分享的内容。"
-    IDS_WEB_TOTAL           "共 %d 个文件，总计 %s"
-    IDS_WEB_COL_FILE        "文件名"
-    IDS_WEB_COL_SIZE        "大小"
-    IDS_MSG_ENCRYPTED_PEER  "对方启用了加密连接（HTTPS）。本客户端目前只支持明文 HTTP，请在对方 LocalSend 的设置中关闭加密后重试。"
-    IDS_SUFFIX_ENCRYPTED    "（加密）"
-    IDS_MSG_FILES_SKIPPED   "文件夹中的文件太多，只发送前 %d 个文件。"
-    IDS_TB_SENDFOLDER       "发送文件夹"
-    IDS_TB_SETTINGS         "设置"
-    IDS_TB_OPENFOLDER       "接收文件夹"
-    IDS_TB_ABOUT            "关于"
-    IDS_TB_FROMURL          "从网址接收"
-    IDS_MSG_HISTORY_CLEARED "已从列表中清除完成的传输记录。"
-    IDS_MSG_CLEAR_FINISHED  "清除已完成的传输(&C)"
-    IDS_URL_INFO            "请输入对方分享的网址："
-    IDS_URL_HINT            "例如：http://192.168.1.5:53317"
-    IDS_MSG_URL_INVALID     "网址无法识别（%s）。请输入形如 http://192.168.1.5:53317 的地址。"
-    IDS_MSG_URL_HTTPS       "该网址使用加密连接（HTTPS），本客户端目前只支持明文 HTTP。"
-    IDS_HELP_TITLE          "使用说明"
-    IDS_HELP_TEXT           "1. 发送文件\r\n先在“附近设备”列表中选择接收方，然后从“文件”菜单选择“发送文件”，或把文件直接拖到主窗口。\r\n\r\n2. 发送文件夹\r\n选中接收方后，从“文件”菜单选择“发送文件夹”，程序会递归发送文件夹中的文件。\r\n\r\n3. 接收文件\r\n对方发起传输时会弹出确认窗口。勾选要接收的文件后点“接受”，文件会保存到设置中的接收文件夹。\r\n\r\n4. 从网址接收\r\n选择“文件 > 从网址接收”，粘贴对方分享的网址，然后点“确定”。\r\n\r\n5. 通过浏览器分享\r\n选择“文件 > 通过浏览器分享”，选择文件后复制生成的网址，对方可以用浏览器下载。\r\n\r\n6. 刷新设备\r\n按 F5，或选择“设备 > 刷新设备列表”，软件会重新搜索局域网设备。\r\n\r\n7. 设置\r\n在“工具 > 设置”中可以修改设备名称、设备型号、监听端口、接收 PIN 码、保存目录、系统托盘和开机启动选项。"
+    IDS_APP_TITLE                    "LocalSend XP"
+    IDS_APP_SUBTITLE                 "非官方 LocalSend 协议客户端"
+    IDS_STATUS_ONLINE                "已连接到局域网"
+    IDS_STATUS_OFFLINE               "网络未连接"
+    IDS_STATUS_SCANNING              "正在搜索局域网设备，请稍候……"
+    IDS_STATUS_LISTENING             "正在监听端口 %d"
+    IDS_STATUS_DEVFMT                "%d 台设备在线"
+    IDS_STATUS_SELFFMT               "本机：%s（%s:%d）"
+    IDS_GROUP_DEVICES                "附近设备"
+    IDS_GROUP_TRANSFERS              "文件传输"
+    IDS_COL_NAME                     "名称"
+    IDS_COL_MODEL                    "设备型号"
+    IDS_COL_TYPE                     "类型"
+    IDS_COL_ADDR                     "IP 地址"
+    IDS_COL_SEEN                     "最后发现"
+    IDS_COL_FILE                     "文件名"
+    IDS_COL_SIZE                     "大小"
+    IDS_COL_PROGRESS                 "进度"
+    IDS_COL_SPEED                    "速度"
+    IDS_COL_ETA                      "剩余时间"
+    IDS_COL_STATE                    "状态"
+    IDS_COL_DIR                      "方向"
+    IDS_BTN_SEND                     "发送文件(&S)"
+    IDS_BTN_REFRESH                  "刷新(&R)"
+    IDS_BTN_SETTINGS                 "设置(&T)"
+    IDS_TYPE_MOBILE                  "移动设备"
+    IDS_TYPE_DESKTOP                 "桌面电脑"
+    IDS_TYPE_WEB                     "网页浏览器"
+    IDS_TYPE_HEADLESS                "无界面程序"
+    IDS_TYPE_SERVER                  "服务器"
+    IDS_TYPE_UNKNOWN                 "未知设备"
+    IDS_DIR_SEND                     "发送"
+    IDS_DIR_RECV                     "接收"
+    IDS_ST_WAITING                   "等待对方确认"
+    IDS_ST_TRANSFER                  "传输中"
+    IDS_ST_DONE                      "已完成"
+    IDS_ST_FAILED                    "失败"
+    IDS_ST_CANCELED                  "已取消"
+    IDS_ST_DENIED                    "对方拒绝接收"
+    IDS_ST_PINWAIT                   "等待 PIN 码"
+    IDS_ST_BLOCKED                   "对方正忙"
+    IDS_ST_FOLDER                    "文件夹"
+    IDS_MSG_SELECT_DEVICE            "请先在「附近设备」列表中选择接收方。"
+    IDS_MSG_NO_FILES                 "没有选择任何文件。"
+    IDS_MSG_SENDFAIL                 "发送失败：%s"
+    IDS_MSG_OPENFOLDER_FAIL          "无法打开文件夹：%s"
+    IDS_MSG_PORTBUSY                 "端口 %d 被占用，接收服务未能启动。请在「设置」中更换端口。"
+    IDS_MSG_TRAYHINT                 "LocalSend XP 正在后台运行，双击图标可以重新打开窗口。"
+    IDS_MSG_RESTART_REQUIRED         "端口设置的改变将在重新启动程序后生效。"
+    IDS_MSG_NOTIFY_TITLE             "LocalSend XP"
+    IDS_MSG_RECEIVED                 "已接收 %d 个文件，保存在：%s"
+    IDS_MSG_RECEIVED_PARTIAL         "已接收 %d 个文件，其中 %d 个失败。"
+    IDS_MSG_TRANSFER_SENT            "已向 %s 发送 %d 个文件。"
+    IDS_MSG_SENT_TO                  "正在向 %s 发送 %d 个文件（共 %s）"
+    IDS_MSG_PIN_REQUIRED             "对方要求输入 PIN 码。"
+    IDS_MSG_DEVICE_BUSY              "对方正在与其它设备传输，请稍后再试。"
+    IDS_MSG_REJECTED                 "对方拒绝了这次传输。"
+    IDS_MSG_NONAME                   "设备名称不能为空。"
+    IDS_MSG_BADNAME                  "设备名称中含有非法字符，请重新输入。"
+    IDS_MSG_PATH_TOO_LONG            "路径太长，无法处理。"
+    IDS_MSG_SAVE_FAIL                "无法写入文件：%s"
+    IDS_MSG_SHARE_EMPTY              "没有可以分享的文件。"
+    IDS_MSG_SECURITY                 "同一时间只允许一个传输会话。"
+    IDS_MSG_FOLDER_SKIP              "文件夹「%s」无法发送，已跳过。"
+    IDS_FILTER_FILES                 "所有文件 (*.*)"
+    IDS_TITLE_SFILES                 "选择要发送的文件"
+    IDS_TITLE_SFOLDER                "选择要发送的文件夹"
+    IDS_RECEIVE_TITLE                "接收文件"
+    IDS_FMT_RECEIVE_INFO             "%s（%s）想要发送 %d 个文件，共 %s："
+    IDS_RECEIVE_ACCEPT               "接受(&A)"
+    IDS_RECEIVE_DENY                 "拒绝(&D)"
+    IDS_PIN_TITLE                    "输入 PIN 码"
+    IDS_PIN_INFO                     "接收方要求输入 PIN 码，请输入 6 位数字："
+    IDS_PIN_WRONG                    "PIN 码不正确，请重新输入。"
+    IDS_SETTINGS_TITLE               "设置"
+    IDS_SET_ERR_PORT                 "端口号无效，请输入 1024 到 65535 之间的数字。"
+    IDS_SET_ERR_DIR                  "保存文件夹不存在，是否现在创建？"
+    IDS_SHARE_TITLE                  "通过浏览器分享"
+    IDS_SHARE_COPIED                 "网址已复制到剪贴板。"
+    IDS_ABOUT_INFO                   "LocalSend XP 是 LocalSend 协议的非官方 Windows 客户端，面向 Windows XP SP3 及更高版本。"
+    IDS_ABOUT_PROTOCOL               "支持的协议版本：LocalSend Protocol v2.2（同时兼容 v1）"
+    IDS_ABOUT_CREDIT                 "本项目与 LocalSend 官方项目无关。协议参考：github.com/localsend/protocol"
+    IDS_LOG_OPENFAIL                 "无法打开日志文件。"
+    IDS_MENU_SHOW                    "显示主窗口(&O)"
+    IDS_MENU_SEND                    "发送文件(&S)..."
+    IDS_MENU_OPENFOLDER              "打开接收文件夹(&F)"
+    IDS_MENU_SETTINGS                "设置(&T)..."
+    IDS_MENU_EXIT                    "退出(&X)"
+    IDS_MSG_CANCEL_TRANSFER          "取消传输(&C)"
+    IDS_MSG_NO_ACTIVE_TRANSFER       "这条传输已经结束。"
+    IDS_TIME_JUSTNOW                 "刚刚"
+    IDS_TIME_SECONDS_AGO             "%d 秒前"
+    IDS_TIME_MINUTES_AGO             "%d 分钟前"
+    IDS_FONT_FACE                    "宋体"
+    IDS_BROWSE_TITLE                 "请选择文件夹"
+    IDS_ETA_LESS_SEC                 "< 1 秒"
+    IDS_ETA_SECONDS                  "%.0f 秒"
+    IDS_ETA_MINUTE_SECOND            "%.0f 分 %.0f 秒"
+    IDS_ETA_HOUR_MINUTE              "%.0f 小时 %.0f 分"
+    IDS_WEB_EMPTY                    "当前没有正在分享的文件。"
+    IDS_WEB_STALE                    "指定的会话不存在，下面是当前分享的内容。"
+    IDS_WEB_TOTAL                    "共 %d 个文件，总计 %s"
+    IDS_WEB_COL_FILE                 "文件名"
+    IDS_WEB_COL_SIZE                 "大小"
+    IDS_MSG_ENCRYPTED_PEER           "对方启用了加密连接（HTTPS）。本客户端目前只支持明文 HTTP，请在对方 LocalSend 的设置中关闭加密后重试。"
+    IDS_SUFFIX_ENCRYPTED             "（加密）"
+    IDS_MSG_FILES_SKIPPED            "文件夹中的文件太多，只发送前 %d 个文件。"
+    IDS_TB_SENDFOLDER                "发送文件夹"
+    IDS_TB_SETTINGS                  "设置"
+    IDS_TB_OPENFOLDER                "接收文件夹"
+    IDS_TB_ABOUT                     "关于"
+    IDS_TB_FROMURL                   "从网址接收"
+    IDS_MSG_HISTORY_CLEARED          "已从列表中清除完成的传输记录。"
+    IDS_MSG_CLEAR_FINISHED           "清除已完成的传输(&C)"
+    IDS_URL_INFO                     "请输入对方分享的网址："
+    IDS_URL_HINT                     "例如：http://192.168.1.5:53317"
+    IDS_MSG_URL_INVALID              "网址无法识别（%s）。请输入形如 http://192.168.1.5:53317 的地址。"
+    IDS_MSG_URL_HTTPS                "该网址使用加密连接（HTTPS），本客户端目前只支持明文 HTTP。"
+    IDS_MSG_TLS_MISSING              "该操作需要 HTTPS 支持，但程序目录中缺少 libeay32.dll / ssleay32.dll。请把它们放到 LocalSendXP.exe 旁边。"
+    IDS_SET_HTTPS                    "启用 HTTPS 加密传输(&E)"
+    IDS_SET_LEGACY                   "允许 TLS 1.0/1.1 回退，兼容旧设备(&L)"
+    IDS_SET_INSECURE                 "允许不安全的 HTTPS，不校验证书(&I)"
+    IDS_SET_CLIENTCERT               "要求对方提供客户端证书(&R)"
+    IDS_GRP_SECURITY                 "加密传输（HTTPS）"
+    IDS_STATUS_HTTPS                 "HTTPS"
+    IDS_ABOUT_TLS_OFF                "HTTPS 未启用（缺少 libeay32.dll / ssleay32.dll，或已在设置中关闭）"
+    IDS_MSG_TLS_NOFINGERPRINT        "对方声明使用 HTTPS，但没有提供证书指纹，无法校验。请重新搜索设备。"
+    IDS_MSG_HTTPS_DISABLED           "对方使用 HTTPS，但本机已关闭 HTTPS。请在设置中启用加密传输后重试。"
+    IDS_HELP_TITLE                   "使用说明"
+    IDS_HELP_TEXT                    "1. 发送文件\r\n先在“附近设备”列表中选择接收方，然后从“文件”菜单选择“发送文件”，或把文件直接拖到主窗口。\r\n\r\n2. 发送文件夹\r\n选中接收方后，从“文件”菜单选择“发送文件夹”，程序会递归发送文件夹中的文件。\r\n\r\n3. 接收文件\r\n对方发起传输时会弹出确认窗口。勾选要接收的文件后点“接受”，文件会保存到设置中的接收文件夹。\r\n\r\n4. 从网址接收\r\n选择“文件 > 从网址接收”，粘贴对方分享的网址，然后点“确定”。\r\n\r\n5. 通过浏览器分享\r\n选择“文件 > 通过浏览器分享”，选择文件后复制生成的网址，对方可以用浏览器下载。\r\n\r\n6. 刷新设备\r\n按 F5，或选择“设备 > 刷新设备列表”，软件会重新搜索局域网设备。\r\n\r\n7. 设置\r\n在“工具 > 设置”中可以修改设备名称、设备型号、监听端口、接收 PIN 码、保存目录、系统托盘和开机启动选项。\r\n\r\n8. 加密传输（HTTPS）\r\n在“工具 > 设置 > 安全”中启用 HTTPS 加密传输。程序会自动生成证书，证书指纹显示在设置页中，可以与对方核对；只有双方都启用 HTTPS 时才会使用加密连接。"
+    IDS_ABOUT_TITLE                  "关于 LocalSend XP"
+    IDS_ABOUT_AUTHOR                 "作者：GitHub @daisukiKaffuChino"
+    IDS_SET_TAB_GENERAL              "常规"
+    IDS_SET_TAB_TRANSFER             "传输"
+    IDS_SET_TAB_NETWORK              "网络"
+    IDS_SET_TAB_SECURITY             "安全"
+    IDS_SET_LANGUAGE                 "界面语言(&L)："
+    IDS_LANG_ZH                      "简体中文"
+    IDS_LANG_EN                      "English"
+    IDS_MSG_LANG_CHANGED             "界面语言已切换。"
+    IDS_SET_GROUP_DEVICE             "本机标识"
+    IDS_SET_GROUP_BEHAVIOR           "启动与托盘"
+    IDS_SET_GROUP_FILES              "接收文件"
+    IDS_SET_GROUP_PROTECT            "传输保护"
+    IDS_SET_GROUP_NET                "端口与公告"
+    IDS_SET_GROUP_TLS                "加密传输（HTTPS）"
+    IDS_SET_DEVICE_INFO              "本机地址："
+    IDS_SET_ANNOUNCE                 "公告间隔（秒）："
+    IDS_SET_CERT_PATH                "证书文件："
+    IDS_SET_CABUNDLE_PATH            "CA 证书包："
+    IDS_SET_FINGERPRINT              "证书指纹："
+    IDS_SET_NOTE                     "设置的改变会立即生效；端口与加密设置的修改需要重新启动程序。"
+    IDS_LBL_ALIAS                    "设备名称："
+    IDS_LBL_TYPE                     "本机类型："
+    IDS_LBL_MODEL                    "设备型号："
+    IDS_LBL_PORT                     "监听端口："
+    IDS_LBL_PIN                      "接收 PIN 码："
+    IDS_LBL_PIN_HINT                 "（留空表示不需要 PIN）"
+    IDS_LBL_DIR                      "接收文件保存到："
+    IDS_CHK_ASK                      "收到文件时先询问我(&A)"
+    IDS_CHK_OPENAFTER                "接收完成后打开保存文件夹(&O)"
+    IDS_CHK_TRAY                     "关闭窗口时最小化到系统托盘(&T)"
+    IDS_CHK_AUTOSTART                "开机时自动启动(&S)"
+    IDS_BTN_BROWSE                   "浏览(&B)..."
+    IDS_BTN_BROWSEFILE               "浏览文件(&F)..."
+    IDS_BTN_OK                       "确定"
+    IDS_BTN_CANCEL                   "取消"
+    IDS_BTN_CLOSE                    "关闭"
+    IDS_BTN_SOURCE                   "开源仓库(&G)"
+    IDS_SHARE_COPY                   "复制(&C)"
+    IDS_MENU_FILE                    "文件(&F)"
+    IDS_MENU_DEVICE                  "设备(&D)"
+    IDS_MENU_TOOLS                   "工具(&T)"
+    IDS_MENU_HELP                    "帮助(&H)"
+    IDS_MENU_ITEM_SEND               "发送文件(&S)..."
+    IDS_MENU_ITEM_SENDFOLDER         "发送文件夹(&D)..."
+    IDS_MENU_ITEM_SHARE              "通过浏览器分享(&B)..."
+    IDS_MENU_ITEM_FROMURL            "从网址接收(&U)..."
+    IDS_MENU_ITEM_REFRESH            "刷新设备列表(&R)\tF5"
+    IDS_MENU_ITEM_SENDSEL            "向选中设备发送(&S)"
+    IDS_MENU_ITEM_OPENFOLDER         "打开接收文件夹(&O)"
+    IDS_MENU_ITEM_SETTINGS           "设置(&O)..."
+    IDS_MENU_ITEM_TRAY               "最小化到系统托盘(&M)"
+    IDS_MENU_ITEM_AUTOSTART          "开机时自动启动(&A)"
+    IDS_MENU_ITEM_LOG                "查看日志文件(&L)"
+    IDS_MENU_ITEM_HELP               "使用说明(&R)\tF1"
+    IDS_MENU_ITEM_PROTOCOL           "LocalSend 协议(&P)"
+    IDS_MENU_ITEM_ABOUT              "关于 LocalSend XP(&A)..."
 END
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE                    "LocalSend XP"
+    IDS_APP_SUBTITLE                 "Unofficial LocalSend protocol client"
+    IDS_STATUS_ONLINE                "Connected to the local network"
+    IDS_STATUS_OFFLINE               "Network not connected"
+    IDS_STATUS_SCANNING              "Searching for devices on the local network..."
+    IDS_STATUS_LISTENING             "Listening on port %d"
+    IDS_STATUS_DEVFMT                "%d device(s) online"
+    IDS_STATUS_SELFFMT               "This PC: %s (%s:%d)"
+    IDS_GROUP_DEVICES                "Nearby devices"
+    IDS_GROUP_TRANSFERS              "File transfers"
+    IDS_COL_NAME                     "Name"
+    IDS_COL_MODEL                    "Model"
+    IDS_COL_TYPE                     "Type"
+    IDS_COL_ADDR                     "IP address"
+    IDS_COL_SEEN                     "Last seen"
+    IDS_COL_FILE                     "File name"
+    IDS_COL_SIZE                     "Size"
+    IDS_COL_PROGRESS                 "Progress"
+    IDS_COL_SPEED                    "Speed"
+    IDS_COL_ETA                      "Time left"
+    IDS_COL_STATE                    "Status"
+    IDS_COL_DIR                      "Direction"
+    IDS_BTN_SEND                     "Send file(&S)"
+    IDS_BTN_REFRESH                  "Refresh(&R)"
+    IDS_BTN_SETTINGS                 "Settings(&T)"
+    IDS_TYPE_MOBILE                  "Mobile device"
+    IDS_TYPE_DESKTOP                 "Desktop computer"
+    IDS_TYPE_WEB                     "Web browser"
+    IDS_TYPE_HEADLESS                "Headless program"
+    IDS_TYPE_SERVER                  "Server"
+    IDS_TYPE_UNKNOWN                 "Unknown device"
+    IDS_DIR_SEND                     "Send"
+    IDS_DIR_RECV                     "Receive"
+    IDS_ST_WAITING                   "Waiting for the receiver"
+    IDS_ST_TRANSFER                  "Transferring"
+    IDS_ST_DONE                      "Completed"
+    IDS_ST_FAILED                    "Failed"
+    IDS_ST_CANCELED                  "Canceled"
+    IDS_ST_DENIED                    "Rejected by the peer"
+    IDS_ST_PINWAIT                   "Waiting for PIN"
+    IDS_ST_BLOCKED                   "Peer is busy"
+    IDS_ST_FOLDER                    "Folder"
+    IDS_MSG_SELECT_DEVICE            "Please select a receiver in the Nearby devices list first."
+    IDS_MSG_NO_FILES                 "No file was selected."
+    IDS_MSG_SENDFAIL                 "Sending failed: %s"
+    IDS_MSG_OPENFOLDER_FAIL          "Cannot open the folder: %s"
+    IDS_MSG_PORTBUSY                 "Port %d is already in use, the receiver service did not start. Please choose another port in Settings."
+    IDS_MSG_TRAYHINT                 "LocalSend XP is still running. Double-click the tray icon to show the window."
+    IDS_MSG_RESTART_REQUIRED         "The port change takes effect after restarting the program."
+    IDS_MSG_NOTIFY_TITLE             "LocalSend XP"
+    IDS_MSG_RECEIVED                 "%d file(s) received, saved to: %s"
+    IDS_MSG_RECEIVED_PARTIAL         "%d file(s) received, %d failed."
+    IDS_MSG_TRANSFER_SENT            "%d file(s) sent to %s."
+    IDS_MSG_SENT_TO                  "Sending %d file(s) to %s (%s in total)"
+    IDS_MSG_PIN_REQUIRED             "The receiver requires a PIN."
+    IDS_MSG_DEVICE_BUSY              "The peer is busy with another transfer, please try again later."
+    IDS_MSG_REJECTED                 "The peer rejected this transfer."
+    IDS_MSG_NONAME                   "The device name cannot be empty."
+    IDS_MSG_BADNAME                  "The device name contains invalid characters."
+    IDS_MSG_PATH_TOO_LONG            "The path is too long."
+    IDS_MSG_SAVE_FAIL                "Cannot write the file: %s"
+    IDS_MSG_SHARE_EMPTY              "There is nothing to share."
+    IDS_MSG_SECURITY                 "Only one transfer session is allowed at a time."
+    IDS_MSG_FOLDER_SKIP              "The folder %s cannot be sent and was skipped."
+    IDS_FILTER_FILES                 "All files (*.*)"
+    IDS_TITLE_SFILES                 "Select the files to send"
+    IDS_TITLE_SFOLDER                "Select the folder to send"
+    IDS_RECEIVE_TITLE                "Receive files"
+    IDS_FMT_RECEIVE_INFO             "%s (%s) wants to send %d file(s), %s in total:"
+    IDS_RECEIVE_ACCEPT               "Accept(&A)"
+    IDS_RECEIVE_DENY                 "Decline(&D)"
+    IDS_PIN_TITLE                    "Enter PIN"
+    IDS_PIN_INFO                     "The receiver requires a PIN. Please enter the 6 digit number:"
+    IDS_PIN_WRONG                    "Incorrect PIN, please try again."
+    IDS_SETTINGS_TITLE               "Settings"
+    IDS_SET_ERR_PORT                 "Invalid port. Please enter a number between 1024 and 65535."
+    IDS_SET_ERR_DIR                  "The destination folder does not exist. Create it now?"
+    IDS_SHARE_TITLE                  "Share via browser"
+    IDS_SHARE_COPIED                 "The URL has been copied to the clipboard."
+    IDS_ABOUT_INFO                   "LocalSend XP is an unofficial Windows client for the LocalSend protocol, targeting Windows XP SP3 and later."
+    IDS_ABOUT_PROTOCOL               "Protocol: LocalSend Protocol v2.2 (v1 compatible)"
+    IDS_ABOUT_CREDIT                 "This project is not affiliated with the official LocalSend project. Protocol reference: github.com/localsend/protocol"
+    IDS_LOG_OPENFAIL                 "Cannot open the log file."
+    IDS_MENU_SHOW                    "Show main window(&O)"
+    IDS_MENU_SEND                    "Send file(&S)..."
+    IDS_MENU_OPENFOLDER              "Open receive folder(&F)"
+    IDS_MENU_SETTINGS                "Settings(&T)..."
+    IDS_MENU_EXIT                    "Exit(&X)"
+    IDS_MSG_CANCEL_TRANSFER          "Cancel transfer(&C)"
+    IDS_MSG_NO_ACTIVE_TRANSFER       "This transfer has already finished."
+    IDS_TIME_JUSTNOW                 "just now"
+    IDS_TIME_SECONDS_AGO             "%d seconds ago"
+    IDS_TIME_MINUTES_AGO             "%d minutes ago"
+    IDS_FONT_FACE                    "宋体"
+    IDS_BROWSE_TITLE                 "Please select a folder"
+    IDS_ETA_LESS_SEC                 "< 1 second"
+    IDS_ETA_SECONDS                  "%.0f seconds"
+    IDS_ETA_MINUTE_SECOND            "%.0f min %.0f sec"
+    IDS_ETA_HOUR_MINUTE              "%.0f h %.0f min"
+    IDS_WEB_EMPTY                    "No files are being shared right now."
+    IDS_WEB_STALE                    "The requested session does not exist; the current share is shown below."
+    IDS_WEB_TOTAL                    "%d file(s), %s in total"
+    IDS_WEB_COL_FILE                 "File name"
+    IDS_WEB_COL_SIZE                 "Size"
+    IDS_MSG_ENCRYPTED_PEER           "The peer uses an encrypted connection (HTTPS); its identity is verified with a certificate fingerprint."
+    IDS_SUFFIX_ENCRYPTED             " (encrypted)"
+    IDS_MSG_FILES_SKIPPED            "Too many files in the folder; only the first %d files are sent."
+    IDS_TB_SENDFOLDER                "Send folder"
+    IDS_TB_SETTINGS                  "Settings"
+    IDS_TB_OPENFOLDER                "Receive folder"
+    IDS_TB_ABOUT                     "About"
+    IDS_TB_FROMURL                   "Receive from URL"
+    IDS_MSG_HISTORY_CLEARED          "Finished transfers have been removed from the list."
+    IDS_MSG_CLEAR_FINISHED           "Clear finished transfers(&C)"
+    IDS_URL_INFO                     "Enter the URL shared by the peer:"
+    IDS_URL_HINT                     "For example: http://192.168.1.5:53317"
+    IDS_MSG_URL_INVALID              "Unrecognised URL (%s). Please enter something like http://192.168.1.5:53317"
+    IDS_MSG_URL_HTTPS                "This URL uses an encrypted connection (HTTPS)."
+    IDS_MSG_TLS_MISSING              "This action needs HTTPS support, but libeay32.dll / ssleay32.dll are missing from the program folder. Please put them next to LocalSendXP.exe."
+    IDS_SET_HTTPS                    "Enable HTTPS encryption(&E)"
+    IDS_SET_LEGACY                   "Allow TLS 1.0/1.1 fallback for old devices(&L)"
+    IDS_SET_INSECURE                 "Allow insecure HTTPS, no certificate check(&I)"
+    IDS_SET_CLIENTCERT               "Require a client certificate(&R)"
+    IDS_GRP_SECURITY                 "HTTPS / TLS encryption"
+    IDS_STATUS_HTTPS                 "HTTPS"
+    IDS_ABOUT_TLS_OFF                "HTTPS is not enabled (missing libeay32.dll / ssleay32.dll, or disabled in Settings)"
+    IDS_MSG_TLS_NOFINGERPRINT        "The peer announces HTTPS but provides no certificate fingerprint, so it cannot be verified. Please search for devices again."
+    IDS_MSG_HTTPS_DISABLED           "The peer uses HTTPS, but HTTPS is disabled on this computer. Please enable HTTPS encryption in Settings and try again."
+    IDS_HELP_TITLE                   "Help"
+    IDS_HELP_TEXT                    "1. Sending files\r\nSelect a receiver in the nearby devices list, then choose File > Send file, or simply drop the files onto the main window.\r\n\r\n2. Sending a folder\r\nSelect a receiver, then choose File > Send folder; every file inside that folder is sent to the peer.\r\n\r\n3. Receiving files\r\nWhen the peer starts a transfer a confirmation window appears. Tick the files you want to keep and press Accept; they are saved to the receive folder configured in Settings.\r\n\r\n4. Receiving from a URL\r\nChoose File > Receive from URL, paste the URL shared by the peer, then press OK.\r\n\r\n5. Sharing through a browser\r\nChoose File > Share via browser, pick the files, then copy the generated URL; the peer can download them with a web browser.\r\n\r\n6. Refreshing devices\r\nPress F5, or choose Device > Refresh devices, to search the local network again.\r\n\r\n7. Settings\r\nTools > Settings changes the device name and model, the listening port, the receive PIN, the save folder, the system tray and the auto-start options.\r\n\r\n8. HTTPS encryption\r\nEnable HTTPS in Tools > Settings > Security. A certificate is generated automatically and its fingerprint is shown on the settings page so that both sides can compare it. An encrypted connection is used only when both sides have HTTPS enabled."
+    IDS_ABOUT_TITLE                  "About LocalSend XP"
+    IDS_ABOUT_AUTHOR                 "Author: GitHub @daisukiKaffuChino"
+    IDS_SET_TAB_GENERAL              "General"
+    IDS_SET_TAB_TRANSFER             "Transfer"
+    IDS_SET_TAB_NETWORK              "Network"
+    IDS_SET_TAB_SECURITY             "Security"
+    IDS_SET_LANGUAGE                 "Language(&L):"
+    IDS_LANG_ZH                      "简体中文"
+    IDS_LANG_EN                      "English"
+    IDS_MSG_LANG_CHANGED             "The interface language has been changed."
+    IDS_SET_GROUP_DEVICE             "This device"
+    IDS_SET_GROUP_BEHAVIOR           "Startup and tray"
+    IDS_SET_GROUP_FILES              "Received files"
+    IDS_SET_GROUP_PROTECT            "Transfer protection"
+    IDS_SET_GROUP_NET                "Port and announcement"
+    IDS_SET_GROUP_TLS                "Encrypted transfer (HTTPS)"
+    IDS_SET_DEVICE_INFO              "Local address:"
+    IDS_SET_ANNOUNCE                 "Announce interval (sec):"
+    IDS_SET_CERT_PATH                "Certificate file:"
+    IDS_SET_CABUNDLE_PATH            "CA bundle:"
+    IDS_SET_FINGERPRINT              "Certificate fingerprint:"
+    IDS_SET_NOTE                     "Changes apply immediately; port/HTTPS changes need a restart."
+    IDS_LBL_ALIAS                    "Device name:"
+    IDS_LBL_TYPE                     "Device type:"
+    IDS_LBL_MODEL                    "Device model:"
+    IDS_LBL_PORT                     "Listening port:"
+    IDS_LBL_PIN                      "Receive PIN:"
+    IDS_LBL_PIN_HINT                 "(empty: no PIN required)"
+    IDS_LBL_DIR                      "Save received files to:"
+    IDS_CHK_ASK                      "Ask me before receiving files(&A)"
+    IDS_CHK_OPENAFTER                "Open the folder after receiving(&O)"
+    IDS_CHK_TRAY                     "Minimize to tray when closing(&T)"
+    IDS_CHK_AUTOSTART                "Start with Windows(&S)"
+    IDS_BTN_BROWSE                   "Browse(&B)..."
+    IDS_BTN_BROWSEFILE               "Browse file(&F)..."
+    IDS_BTN_OK                       "OK"
+    IDS_BTN_CANCEL                   "Cancel"
+    IDS_BTN_CLOSE                    "Close"
+    IDS_BTN_SOURCE                   "&Source repository"
+    IDS_SHARE_COPY                   "&Copy"
+    IDS_MENU_FILE                    "&File"
+    IDS_MENU_DEVICE                  "&Device"
+    IDS_MENU_TOOLS                   "&Tools"
+    IDS_MENU_HELP                    "&Help"
+    IDS_MENU_ITEM_SEND               "Send &files..."
+    IDS_MENU_ITEM_SENDFOLDER         "Send f&older..."
+    IDS_MENU_ITEM_SHARE              "Share via &browser..."
+    IDS_MENU_ITEM_FROMURL            "Receive from &URL..."
+    IDS_MENU_ITEM_REFRESH            "&Refresh devices\tF5"
+    IDS_MENU_ITEM_SENDSEL            "&Send to selected device"
+    IDS_MENU_ITEM_OPENFOLDER         "&Open receive folder"
+    IDS_MENU_ITEM_SETTINGS           "&Settings..."
+    IDS_MENU_ITEM_TRAY               "Minimize to &tray"
+    IDS_MENU_ITEM_AUTOSTART          "Start with &Windows"
+    IDS_MENU_ITEM_LOG                "View &log file"
+    IDS_MENU_ITEM_HELP               "&Usage help\tF1"
+    IDS_MENU_ITEM_PROTOCOL           "LocalSend &protocol"
+    IDS_MENU_ITEM_ABOUT              "&About LocalSend XP..."
+END
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+
+
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
 /////////////////////////////////////////////////////////////////////////////
 // Version

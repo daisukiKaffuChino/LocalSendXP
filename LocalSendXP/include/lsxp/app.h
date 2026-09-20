@@ -83,11 +83,13 @@ public:
     void OpenDownloadFolder();
     void ShareFiles(const std::vector<std::wstring>& paths);
     void ReceiveFromUrl(const std::wstring& url);
+    void ApplyLanguageChange();
     void ApplySettingChange();
 
     bool StartServices(std::string& errorText);
     void StopServices();
     bool ServicesRunning() const { return m_serverRunning; }
+    bool HttpsActive() const { return m_httpsActive; }
 
     volatile LONG m_quitting;
     volatile LONG m_incomingBusy;
@@ -110,6 +112,7 @@ private:
         std::string    sessionId;
         std::string    pin;
         std::string    saveDirectory;   // UTF-8
+        bool           secure;
     };
 
     class JobProgress : public ITransferProgress
@@ -142,6 +145,7 @@ private:
     HttpServer*           m_server;
     proto::ServerHandler* m_serverHandler;
     bool                  m_serverRunning;
+    bool                  m_httpsActive;
 
     CRITICAL_SECTION     m_eventCs;
     std::vector<UiEvent> m_events;

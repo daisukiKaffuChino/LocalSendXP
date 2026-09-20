@@ -3,8 +3,22 @@
 
 #include "common.h"
 #include "network.h"
+#include "tls.h"
 
 namespace lsxp {
+
+// Transport options for one HTTP exchange. This keeps the HTTP layer ignorant
+// of OpenSSL while still allowing https:// sessions.
+struct HttpConnectionOptions
+{
+    HttpConnectionOptions();
+
+    bool        secure;              // wrap the TCP connection in TLS
+    std::string hostName;            // SNI name / hostname check (defaults to the IP)
+    int         verifyMode;          // TlsVerifyMode
+    std::string expectedFingerprint; // LocalSend certificate pinning
+    bool        allowLegacyTls;
+};
 
 struct HttpHeader
 {
@@ -27,6 +41,8 @@ public:
     HANDLE fileHandle;
     int64  fileOffset;
     int64  fileLength;
+
+    HttpConnectionOptions connection;
 
     void SetHeader(const std::string& name, const std::string& value);
     bool Has(const std::string& name) const;
@@ -75,7 +91,7 @@ private:
 class HttpBodyReader
 {
 public:
-    HttpBodyReader(TcpSocket* socket, int64 length, bool chunked, const std::string& pendingData);
+    HttpBodyReader(IStream* socket, int64 length, bool chunked, const std::string& pendingData);
 
     int   Read(void* buffer, int capacity);
     int64 Length() const { return m_length; }
@@ -86,7 +102,7 @@ private:
     int  ReadFromChunked(void* buffer, int capacity);
     bool FillPending();
 
-    TcpSocket*  m_socket;
+    IStream*    m_socket;
     int64       m_length;      // -1 when unknown
     int64       m_read;
     bool        m_chunked;

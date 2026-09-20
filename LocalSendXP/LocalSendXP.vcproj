@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;UNICODE;_UNICODE;WINVER=0x0501;_WIN32_WINNT=0x0501;_WIN32_IE=0x0501;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -59,7 +59,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="_DEBUG"
 			/>
 			<Tool
@@ -123,7 +123,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;UNICODE;_UNICODE;WINVER=0x0501;_WIN32_WINNT=0x0501;_WIN32_IE=0x0501;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				RuntimeLibrary="0"
 				ExceptionHandling="1"
@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="NDEBUG"
 			/>
 			<Tool
@@ -202,7 +202,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;UNICODE;_UNICODE;WINVER=0x0501;_WIN32_WINNT=0x0501;_WIN32_IE=0x0501;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="_DEBUG"
 			/>
 			<Tool
@@ -281,7 +281,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;UNICODE;_UNICODE;WINVER=0x0501;_WIN32_WINNT=0x0501;_WIN32_IE=0x0501;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS"
 				RuntimeLibrary="0"
 				ExceptionHandling="1"
@@ -295,7 +295,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource"
+				AdditionalIncludeDirectories="$(ProjectDir)include;$(ProjectDir)resource;$(ProjectDir)..\third_party\openssl\include"
 				PreprocessorDefinitions="NDEBUG"
 			/>
 			<Tool
@@ -361,6 +361,23 @@
 				</File>
 			</Filter>
 			<Filter
+				Name="crypto"
+				Filter=""
+				UniqueIdentifier="{A1000006-0006-0006-0006-000000000006}"
+				>
+				<File
+					RelativePath=".\src\crypto\openssl_api.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\crypto\openssl_api.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\crypto\tls_context.cpp"
+					>
+				</File>
+			</Filter>			<Filter
 				Name="network"
 				Filter=""
 				UniqueIdentifier="{A1000002-0002-0002-0002-000000000002}"
@@ -379,6 +396,10 @@
 				</File>
 				<File
 					RelativePath=".\src\network\udp_socket.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\network\tls_socket.cpp"
 					>
 				</File>
 			</Filter>
@@ -524,6 +545,10 @@
 			</File>
 			<File
 				RelativePath=".\include\lsxp\sha256.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\lsxp\tls.h"
 				>
 			</File>
 			<File

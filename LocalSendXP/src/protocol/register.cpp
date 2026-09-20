@@ -85,15 +85,63 @@ JsonValue BuildDeviceInfo(const Config& config, bool includePort, bool includeFi
     info.Set("deviceType", config.deviceType);
     if (includeFingerprint)
     {
-        info.Set("fingerprint", config.fingerprint);
+        info.Set("fingerprint", LocalFingerprint());
     }
     if (includePort)
     {
         info.Set("port", config.port);
-        info.Set("protocol", config.ProtocolName());
+        info.Set("protocol", LocalProtocol());
         info.Set("download", true);
     }
     return info;
+}
+
+namespace {
+
+std::string g_localProtocol = "http";
+std::string g_localFingerprint;
+
+}  // namespace
+
+void SetLocalProtocol(const std::string& protocol)
+{
+    g_localProtocol = (protocol == "https") ? "https" : "http";
+}
+
+const std::string& LocalProtocol()
+{
+    return g_localProtocol;
+}
+
+void SetLocalFingerprint(const std::string& fingerprint)
+{
+    g_localFingerprint = fingerprint;
+}
+
+const std::string& LocalFingerprint()
+{
+    return g_localFingerprint;
+}
+
+void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request)
+{
+    request.connection.secure = false;
+    request.connection.allowLegacyTls = config.allowLegacyTls;
+    request.connection.expectedFingerprint.clear();
+
+    if (device.protocol != "https")
+    {
+        return;
+    }
+
+    // LocalSend uses self signed certificates, so the trust anchor is the
+    // fingerprint that the peer announced over UDP.
+    request.connection.secure = true;
+    request.connection.hostName = device.ip;
+    request.connection.expectedFingerprint = device.fingerprint;
+    request.connection.verifyMode = config.allowInsecureHttps
+                                    ? TLS_VERIFY_ALLOW_INSECURE
+                                    : TLS_VERIFY_FINGERPRINT;
 }
 
 namespace {
@@ -189,6 +237,8 @@ bool SendRegister(const Device& device,
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", FormatUInt((uint64)request.body.size()));
 
+    ApplyDeviceSecurity(device, config, request);
+
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, timeoutMs, errorText))
     {
@@ -229,6 +279,8 @@ bool SendRegisterV1(const Device& device, const Config& config, Device& updatedD
     request.body = BuildDeviceInfoV1(config, true).Serialize();
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", FormatUInt((uint64)request.body.size()));
+
+    ApplyDeviceSecurity(device, config, request);
 
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, 3000, errorText))
@@ -338,7 +390,18 @@ bool ServerHandler::HandleRegister(HttpContext& context)
         device.version = "1.0";
     }
 
-    if (!device.fingerprint.empty() && device.fingerprint == config.fingerprint)
+    // In HTTPS mode the peer declares the SHA-256 of its certificate; when it
+    // presented a client certificate we make sure the two match.
+    std::string declared = device.fingerprint;
+    if (!context.clientFingerprint.empty() && !declared.empty() &&
+        !EqualsNoCase(declared, context.clientFingerprint))
+    {
+        LogLine("register from %s rejected: certificate fingerprint mismatch", context.clientIp.c_str());
+        context.response->SetText(403, "Forbidden", "certificate fingerprint mismatch");
+        return true;
+    }
+
+    if (!device.fingerprint.empty() && EqualsNoCase(device.fingerprint, LocalFingerprint()))
     {
         // A stale announcement from ourselves: answer, but do not list it.
         context.response->SetJson(BuildResponseInfo(config, v1).Serialize());

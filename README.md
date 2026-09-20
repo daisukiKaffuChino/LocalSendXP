@@ -216,6 +216,156 @@ build_release.bat x64 Release
 
 错误码严格按协议返回：`400 / 401 / 403 / 404 / 409 / 422 / 429 / 500 / 503 / 204`。
 
+## HTTPS / TLS（默认开启）
+
+## 界面语言与设置对话框
+
+### 语言切换（简体中文 / English）
+
+界面语言在 **设置 → 常规 → 界面语言** 里切换，默认 `简体中文`，**不需要重启**：切换后标题、
+菜单、工具栏、列表表头、状态栏、设置对话框本身会立刻换成另一种语言。选择保存在
+`LocalSendXP.ini` 的 `[general] language`（`zh` / `en`）。
+
+实现方式（延续 2000 年代的做法，不引入任何 i18n 库）：
+
+| 部分 | 做法 |
+| --- | --- |
+| 字符串 | `.rc` 里同一批 ID 写两份 `STRINGTABLE`，分别放在 `LANGUAGE LANG_CHINESE` 与 `LANGUAGE LANG_ENGLISH` 块；`LoadStr()` 用 `FindResourceExW` 按当前语言取块，再按 Win32 字符串表格式（每块 16 条、每条一个 WORD 长度前缀）手工解析，不依赖线程区域设置 |
+| 菜单 | 菜单不再使用 MENU 资源，而是运行时用 `CreateMenu`/`AppendMenu` 按字符串 ID 构建，因此可以随语言重建 |
+| 对话框 | 新增 `LxpDialogBoxParam()` / `LxpCreateDialogParam()`，用 `FindResourceExW(RT_DIALOG)` + `DialogBoxIndirectParam` 显式按语言加载模板；对话框内的标题、分组框、标签、按钮、复选框统一在 `WM_INITDIALOG` 里用字符串 ID 赋值 |
+| 立即生效 | 语言改变时先 `SetResourceLanguage()`，再重建菜单并调用 `RefreshMainWindowTexts()`（按控件 ID 遍历子窗口，因此**即使同一个分组框 ID 重复出现也会全部刷新**），最后重绘主窗口与设置对话框 |
+| 工具栏 | 工具栏按钮文字用 `TB_SETBUTTONINFO` 更新；该消息的 `wParam` 是**命令 ID 而不是按钮下标**，工程里为每个按钮同时保存了命令 ID（`toolbarCommandIds`） |
+
+另外三个对话框（从网址接收 `IDD_URL`、使用说明 `IDD_HELP`、关于 `IDD_ABOUT`）以及接收确认
+（`IDD_RECEIVE`）和 PIN 输入（`IDD_PIN`）都统一走 `LxpDialogBoxParam()`，并在 `WM_INITDIALOG`
+里按字符串 ID 赋值——模板里的中文只是设计期占位，运行时会被当前语言覆盖。关于对话框不再显示
+TLS 版本与证书指纹（指纹仍在 **设置 → 安全** 里显示），作者与开源仓库按钮随语言切换。
+
+`IDD_PIN` 的标题、提示文字与按钮原先直接使用模板中文，现已改为字符串 ID；同时补上了
+`PinProc` 里漏掉的 `SetWindowLongPtrW(dialog, DWLP_USER, lParam)`——此前输入的 PIN 根本传不回调用方。
+
+### 设置对话框（选项卡）
+
+设置对话框改为 4 个选项卡，项目重新归类：
+
+| 选项卡 | 内容 |
+| --- | --- |
+| **常规** | 设备名称、本机类型、设备型号、**界面语言**；启动与托盘：开机自动启动、关闭时最小化到托盘 |
+| **传输** | 接收文件保存到（含浏览）、收到文件时先询问、接收完成后打开文件夹；传输保护：接收 PIN 码 |
+| **网络** | 监听端口、设备公告间隔（秒）、本机地址（实时显示，例：`192.168.1.8:53317`） |
+| **安全** | 启用 HTTPS、TLS 1.0/1.1 回退、允许不安全 HTTPS、要求客户端证书、证书指纹（实时显示）；证书文件路径与 CA 证书包路径 |
+
+实现：`IDD_SETTINGS` 只放 `SysTabControl32` 与说明/按钮，4 个页面各自是 `WS_CHILD` 的对话框模板
+（`IDD_SETTINGS_GENERAL/TRANSFER/NETWORK/SECURITY`），用 `CreateDialogIndirectParam` 建成子窗口，
+按 `TabCtrl_AdjustRect` 算出的显示区定位，`TCN_SELCHANGE` 时切换显示；页面把 `WM_COMMAND`
+转发给设置对话框统一处理。
+
+### 已实测
+
+- 打开设置：4 个页签齐全，各页控件与动态内容（本机地址、证书指纹、证书路径）正常显示。
+- 中文 → English → 中文 双向切换：对话框标题、说明、分组框、标签、复选框、主窗口菜单/工具栏/分组框、
+  列表表头全部随之切换，且**切换过程中程序不崩溃**（脚本逐控件读取窗口文本核对）。
+- 工具栏语言跟随：抓取工具栏位图做像素比对，中文 → English 有 25.6% 像素变化，English → 中文同样变化，
+  切回中文后与初始位图 **0% 差异**，说明按钮文字确实随语言重建且不会留下残留。
+- 切换后立即重绘：切语言瞬间抓图与随后强制 `RedrawWindow` 再抓图 **0% 差异**，即不需要再点一下页签
+  文字就是新的（此前需要切换选项卡才显示）。
+- 文本裁剪：用控件自身的字体（`WM_GETFONT` + `GetTextExtentPoint32W`）逐控件量宽度，
+  关于 / 使用说明 / 从网址接收 / 设置四个对话框在中文与英文两种语言下均无裁剪；
+  设置页按英文尺寸排布（标签列 110 DU、输入控件 x=132、复选框宽 288 DU）。
+- 选择持久化：退出后 `LocalSendXP.ini` 为 `language=zh`（中文默认）。
+
+> 中文字符串表曾经被误写成英文（186 条里有 130 条是英文原文），表现为中文界面里夹杂英文
+> （例如设置里的「加密传输」）。现已从 git 历史逐条恢复，并补齐新增的 HTTPS 相关中文；
+> 校验脚本会统计「不含中日韩字符的中文条目」，当前只剩品牌名、`HTTPS`、`English` 这类本来就不翻译的项。
+
+### 为什么是 OpenSSL 1.0.2
+
+XP SP3 自带的 SChannel 最高只到 **TLS 1.0**，而官方 LocalSend 基于 rustls，**只支持 TLS 1.2+**，
+两者根本握不上手。所以 HTTPS 不依赖系统 Schannel，而是自带一份能在 XP 上运行的
+**OpenSSL 1.0.2u**（1.0.2 是最后一个支持 XP 的分支；1.1.0 起改用新 CRT/API，XP 直接不支持）。
+
+### 编译 OpenSSL（一次性）
+
+```bat
+:: 源码取自 codeload（GitHub release 直链在国内常被墙）
+::   https://codeload.github.com/openssl/openssl/tar.gz/refs/tags/OpenSSL_1_0_2u
+:: 用 VS2008 + Git 自带 Perl 配置（no-asm 免 NASM）：
+perl Configure VC-WIN32 no-asm no-idea no-mdc2 no-rc5 --openssldir=<dir> --prefix=<dir>
+call ms\do_ms.bat
+:: 关键一步：把 ms\ntdll.mak 里的 /MD 全部改成 /MT（否则 DLL 依赖 MSVCR90，XP 上要装运行库）
+nmake -f ms\ntdll.mak
+```
+
+产物：`libeay32.dll`（1.31 MB）+ `ssleay32.dll`（338 KB），**与 LocalSendXP.exe 放在同一个目录**即可，
+不需要用户额外安装 OpenSSL。已实测 DLL 只导入 `WS2_32/GDI32/ADVAPI32/USER32/KERNEL32`，
+**没有 MSVCR90、没有任何 Vista+ API**。
+
+注意：把 Git 的 `usr\bin` 追加到 PATH **末尾**，否则 nmake 调用的 `link` 会变成 GNU coreutils 的 `link`。
+
+### 代码结构（协议层不依赖 TLS 实现）
+
+```
+include/lsxp/tls.h            TlsContext / TlsStream / 验证模式（不含任何 OpenSSL 声明）
+include/lsxp/network.h        IStream（TcpSocket 与 TlsStream 的共同接口）
+src/crypto/openssl_api.{h,cpp} 私有函数指针表：动态 LoadLibrary + GetProcAddress，Win32 锁回调
+src/crypto/tls_context.cpp     自签证书生成/加载、指纹、CA bundle、client/server 两套 SSL_CTX
+src/network/tls_socket.cpp     SSL_connect/SSL_accept、SNI、指纹固定 / CA+主机名校验、超时读写
+```
+
+`HttpClient` / `HttpServer` 只认 `IStream`，**看不到 `SSL_CTX*`、`SSL*`**；加密与否由
+`HttpConnectionOptions`（secure / hostName / verifyMode / expectedFingerprint / allowLegacyTls）描述。
+
+### 设置项（默认开启）
+
+设置对话框底部新增「HTTPS / TLS 加密」分组，写入 `LocalSendXP.ini` 的 `[security]` 段：
+
+| 键 | 默认 | 含义 |
+| --- | --- | --- |
+| `https` | **1（开）** | 启用 HTTPS 加密传输；关闭则退回纯 HTTP（XP 兼容模式） |
+| `allowLegacyTls` | 0 | 额外允许 TLS 1.0/1.1 回退（默认只允许 TLS 1.2） |
+| `allowInsecureHttps` | 0 | **明确**允许不校验证书（除用户手动开启外，程序不会使用 `SSL_VERIFY_NONE`） |
+| `requireClientCertificate` | 0 | 要求对方出示客户端证书 |
+| `certificate` / `caBundle` | 空 | 自定义证书 / CA bundle 路径，空则用程序目录下的 `LocalSendXP.pem`、`certs\ca-bundle.crt` |
+
+证书首次运行自动生成（RSA-2048 + SHA-256 自签，有效期 10 年）存为 `LocalSendXP.pem`；
+**HTTPS 模式下公告的 `fingerprint` 就是该证书的 SHA-256**（HTTP 模式下仍是随机串，符合协议）。
+状态栏会显示「· HTTPS」，关于对话框显示 OpenSSL 版本与证书指纹。
+
+### 服务端同时兼容明文与加密
+
+HTTPS 开启时，同一个端口既服务 TLS 客户端也服务明文客户端：收到连接后先 peek 首字节，
+`0x16` 是 TLS 握手记录 → 走 `SSL_accept`，否则按普通 HTTP 处理。这样即使对端忽略了
+我们公告的 `protocol`，也仍能连上。
+
+### 已实测（本机 Windows 10，真实运行）
+
+| 项目 | 结果 |
+| --- | --- |
+| OpenSSL DLL 导入表 | 仅 5 个 XP 自带 DLL，无 MSVCR90、无 Vista+ API |
+| TLS 版本 / 套件（外部站点） | TLS 1.2 + `ECDHE-RSA-AES128/256-GCM-SHAxxx`，SNI 生效 |
+| 证书验证（自带 CA bundle） | 对 `www.bing.com`：`Verify return code: 0 (ok)` |
+| 本程序 HTTPS 服务端 | `curl -k https://127.0.0.1:53317/api/localsend/v2/info` 返回正确 JSON |
+| 同端口明文兼容 | `curl http://127.0.0.1:53317/...` 同样返回正确 JSON |
+| 握手细节 | 自带 openssl 客户端连本程序：`TLSv1.2` + 证书 `CN=DESKTOP-B01E684` |
+| HTTPS 上传文件 | 自研客户端向自研服务端经 HTTPS 上传 5 MB，成功 |
+| 指纹固定（正向） | 指纹正确时握手通过、传输成功 |
+| 指纹固定（负向） | 指纹不匹配时被拒绝并给出明确错误 |
+| 反向传输走 HTTPS（CA 校验） | 自签证书被握手阶段拒绝（`certificate verify failed`），证明不会静默跳过校验 |
+| 反向传输走 HTTPS（允许不安全） | 用户显式开启后成功拉取 5 MB，SHA-256 与源文件一致 |
+| 公告内容 | `"protocol":"https"` + `"fingerprint":"<证书SHA256>"`（抓包验证） |
+| 设置项持久化 | 退出后 ini 出现 `[security] https=1` |
+
+服务端日志会记录每次 TLS 连接的结果，例如：
+`HTTPS accepted from 127.0.0.1: TLSv1.2 / AES256-GCM-SHA384 (client certificate none)`。
+
+### HTTPS 相关限制
+
+- **XP 上只能到 TLS 1.2**（OpenSSL 1.0.2 不支持 TLS 1.3）；对端若强制 TLS 1.3 则无法连接。
+- 与官方 LocalSend 的 HTTPS 互通依赖**双方的证书指纹交换**：需要对方处于加密模式且能被发现到；
+  这一条建议在真机上与手机端各测一次。
+- 「从网址接收」对 `https://` 的公开站点使用 CA bundle 校验；对 LocalSend 的自签证书，
+  要么走指纹固定（通过设备列表发送），要么由用户显式打开「允许不安全的 HTTPS」。
+
 ## XP 兼容注意事项汇总
 
 1. **不调用任何 XP 之后才出现的 API**：没有 `GetTickCount64`、`InetPton`、`GetAdaptersAddresses`（Vista+）、

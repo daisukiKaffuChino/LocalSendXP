@@ -46,7 +46,7 @@ bool HttpContext::ReadBody(std::string& out, int64 maxBytes, std::string& errorT
 }
 
 // ------------------------------------------------------------ body reader
-HttpBodyReader::HttpBodyReader(TcpSocket* socket, int64 length, bool chunked,
+HttpBodyReader::HttpBodyReader(IStream* socket, int64 length, bool chunked,
                                const std::string& pendingData)
     : m_socket(socket),
       m_length(chunked ? -1 : length),
@@ -261,7 +261,9 @@ HttpServer::HttpServer()
       m_running(0),
       m_thread(NULL),
       m_port(0),
-      m_activeConnections(0)
+      m_activeConnections(0),
+      m_useHttps(false),
+      m_allowLegacyTls(false)
 {
 }
 
@@ -270,7 +272,8 @@ HttpServer::~HttpServer()
     Stop();
 }
 
-bool HttpServer::Start(unsigned short port, IHttpHandler* handler, std::string& errorText)
+bool HttpServer::Start(unsigned short port, IHttpHandler* handler,
+                       bool useHttps, bool allowLegacyTls, std::string& errorText)
 {
     if (m_running != 0)
     {
@@ -292,6 +295,8 @@ bool HttpServer::Start(unsigned short port, IHttpHandler* handler, std::string& 
 
     m_handler = handler;
     m_port = m_listener->BoundPort();
+    m_useHttps = useHttps;
+    m_allowLegacyTls = allowLegacyTls;
     InterlockedExchange(&m_running, 1);
 
     m_thread = CreateThread(NULL, 0, &HttpServer::ListenEntry, this, 0, NULL);
@@ -479,7 +484,7 @@ bool HttpServer::ParseRequestHead(const std::string& head,
 }
 
 bool HttpServer::WriteResponse(HttpResponse& response,
-                               TcpSocket& socket,
+                               IStream& socket,
                                bool keepAlive,
                                std::string& errorText)
 {
@@ -571,6 +576,43 @@ void HttpServer::ServeConnection(SOCKET clientSocket, const std::string& clientI
         return;
     }
     socket.SetNoDelay(true);
+    socket.SetPeer(clientIp, 0);   // keep the peer address for the TLS log lines
+
+    // When HTTPS is enabled the very same port also serves plain HTTP peers:
+    // the first byte of a TLS record is 0x16 (handshake).
+    TlsStream tls;
+    IStream* stream = &socket;
+    static std::string emptyFingerprint;
+    const std::string* clientCertificate = &emptyFingerprint;
+
+    if (m_useHttps)
+    {
+        fd_set readSet;
+        FD_ZERO(&readSet);
+        FD_SET(clientSocket, &readSet);
+        timeval timeout;
+        timeout.tv_sec = 30;
+        timeout.tv_usec = 0;
+
+        if (select(0, &readSet, NULL, NULL, &timeout) <= 0)
+        {
+            return;
+        }
+
+        char peek = 0;
+        int peeked = recv(clientSocket, &peek, 1, MSG_PEEK);
+        if (peeked == 1 && (unsigned char)peek == 0x16)
+        {
+            std::string tlsError;
+            if (!tls.Accept(&socket, m_allowLegacyTls, tlsError))
+            {
+                LogLine("TLS handshake with %s failed: %s", clientIp.c_str(), tlsError.c_str());
+                return;
+            }
+            stream = &tls;
+            clientCertificate = &tls.PeerFingerprint();
+        }
+    }
 
     std::string buffer;
     for (;;)
@@ -583,7 +625,7 @@ void HttpServer::ServeConnection(SOCKET clientSocket, const std::string& clientI
                 return;
             }
             char temp[8192];
-            int received = socket.Recv(temp, sizeof(temp), 30000);
+            int received = stream->Recv(temp, sizeof(temp), 30000);
             if (received <= 0)
             {
                 return;
@@ -603,7 +645,8 @@ void HttpServer::ServeConnection(SOCKET clientSocket, const std::string& clientI
         if (!ParseRequestHead(head, request, keepAlive, bodyLength, chunked))
         {
             const char* bad = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-            send(clientSocket, bad, (int)strlen(bad), 0);
+            std::string badError;
+            stream->SendAll(bad, (int)strlen(bad), badError);
             return;
         }
 
@@ -611,18 +654,19 @@ void HttpServer::ServeConnection(SOCKET clientSocket, const std::string& clientI
         if (EqualsNoCase(request.HeaderOr("Expect", ""), "100-continue"))
         {
             const char* cont = "HTTP/1.1 100 Continue\r\n\r\n";
-            socket.SendAll(cont, (int)strlen(cont), sendError);
+            stream->SendAll(cont, (int)strlen(cont), sendError);
         }
 
-        HttpBodyReader reader(&socket, bodyLength, chunked, pending);
+        HttpBodyReader reader(stream, bodyLength, chunked, pending);
         HttpResponse response;
 
         HttpContext context;
         context.request = &request;
         context.body = &reader;
         context.response = &response;
-        context.socket = &socket;
+        context.socket = stream;
         context.clientIp = clientIp;
+        context.clientFingerprint = *clientCertificate;
         context.keepAlive = keepAlive;
 
         bool handled = false;
@@ -640,7 +684,7 @@ void HttpServer::ServeConnection(SOCKET clientSocket, const std::string& clientI
             response.reason = "OK";
         }
 
-        if (!WriteResponse(response, socket, keepAlive, sendError))
+        if (!WriteResponse(response, *stream, keepAlive, sendError))
         {
             LogLine("response to %s failed: %s", clientIp.c_str(), sendError.c_str());
             return;

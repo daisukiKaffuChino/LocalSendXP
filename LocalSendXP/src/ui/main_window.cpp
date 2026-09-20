@@ -33,6 +33,10 @@ struct WindowState
     std::vector<long>   transferRowIds;
     std::vector<int>    transferPercents;
     std::vector<std::wstring> toolbarTexts;
+    std::vector<int>          toolbarTextIds;
+    std::vector<int>          toolbarCommandIds;
+    std::vector<int>          deviceColumnIds;
+    std::vector<int>          transferColumnIds;
     bool trayActive;
     bool modalActive;
 };
@@ -94,6 +98,11 @@ void UpdateStatusParts(HWND hwnd)
                                   config.alias.c_str(),
                                   Utf8ToWide(GetPrimaryLocalIPv4()).c_str(),
                                   config.port);
+    if (App::Instance().HttpsActive())
+    {
+        self += L"  ·  ";
+        self += LoadStr(IDS_STATUS_HTTPS);
+    }
     SendMessageW(g_window.statusBar, SB_SETTEXTW, 2, (LPARAM)self.c_str());
 }
 
@@ -436,6 +445,11 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
 {
     g_window.font = CreateGuiFont(false);
 
+    g_window.deviceGroup = CreateWindowExW(0, L"BUTTON", LoadStr(IDS_GROUP_DEVICES).c_str(),
+                                           WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+                                           0, 0, 10, 10, hwnd,
+                                           (HMENU)IDC_DEVICE_GROUP, instance, NULL);
+
     g_window.toolbar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL,
                                        WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_LIST |
                                        TBSTYLE_TOOLTIPS | CCS_TOP | CCS_NOPARENTALIGN,
@@ -464,12 +478,17 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
             IDS_TB_SENDFOLDER, IDS_TB_FROMURL, IDS_TB_OPENFOLDER,
             IDS_TB_SETTINGS, IDS_TB_ABOUT
         };
+        // The image list holds exactly the five button icons, in this order.
         const int imageIds[5] = { 0, 1, 2, 3, 4 };
 
         g_window.toolbarTexts.clear();
+        g_window.toolbarTextIds.clear();
+        g_window.toolbarCommandIds.clear();
         for (int i = 0; i < buttonCount; ++i)
         {
             g_window.toolbarTexts.push_back(LoadStr(textIds[i]));
+            g_window.toolbarTextIds.push_back(textIds[i]);
+            g_window.toolbarCommandIds.push_back(commandIds[i]);
         }
 
         TBBUTTON buttons[5];
@@ -539,6 +558,7 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
     };
     const int deviceColumnWidths[kDeviceColumns] = { 150, 130, 80, 110, 70 };
     InitListViewColumns(g_window.deviceList, deviceColumnIds, deviceColumnWidths, kDeviceColumns);
+    g_window.deviceColumnIds.assign(deviceColumnIds, deviceColumnIds + kDeviceColumns);
 
     const int transferColumnIds[kTransferColumns] =
     {
@@ -546,6 +566,7 @@ void CreateChildren(HWND hwnd, HINSTANCE instance)
     };
     const int transferColumnWidths[kTransferColumns] = { 160, 70, 90, 90, 80, 110 };
     InitListViewColumns(g_window.transferList, transferColumnIds, transferColumnWidths, kTransferColumns);
+    g_window.transferColumnIds.assign(transferColumnIds, transferColumnIds + kTransferColumns);
 
     HWND children[8];
     children[0] = g_window.deviceList;
@@ -577,6 +598,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         {
             CREATESTRUCTW* create = (CREATESTRUCTW*)lParam;
             CreateChildren(hwnd, create->hInstance);
+            {
+                HMENU menu = BuildMainMenu();
+                if (menu != NULL)
+                {
+                    SetMenu(hwnd, menu);
+                }
+            }
             App::Instance().SetMainWindow(hwnd);
             g_window.trayActive = TrayCreate(hwnd);
             if (g_window.trayActive)
@@ -825,6 +853,173 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
 }  // namespace
 
+// The main menu is created in code so that it can follow the interface
+// language without a restart.
+HMENU BuildMainMenu()
+{
+    HMENU menu = CreateMenu();
+    if (menu == NULL)
+    {
+        return NULL;
+    }
+
+    HMENU fileMenu = CreatePopupMenu();
+    AppendMenuW(fileMenu, MF_STRING, IDM_FILE_SEND, LoadStr(IDS_MENU_ITEM_SEND).c_str());
+    AppendMenuW(fileMenu, MF_STRING, IDM_FILE_SENDFOLDER, LoadStr(IDS_MENU_ITEM_SENDFOLDER).c_str());
+    AppendMenuW(fileMenu, MF_STRING, IDM_FILE_FROMURL, LoadStr(IDS_MENU_ITEM_FROMURL).c_str());
+    AppendMenuW(fileMenu, MF_STRING, IDM_FILE_SHARE, LoadStr(IDS_MENU_ITEM_SHARE).c_str());
+    AppendMenuW(fileMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenuW(fileMenu, MF_STRING, IDM_FILE_EXIT, LoadStr(IDS_MENU_EXIT).c_str());
+    AppendMenuW(menu, MF_POPUP, (UINT_PTR)fileMenu, LoadStr(IDS_MENU_FILE).c_str());
+
+    HMENU deviceMenu = CreatePopupMenu();
+    AppendMenuW(deviceMenu, MF_STRING, IDM_DEVICE_REFRESH, LoadStr(IDS_MENU_ITEM_REFRESH).c_str());
+    AppendMenuW(deviceMenu, MF_STRING, IDM_DEVICE_SEND, LoadStr(IDS_MENU_ITEM_SENDSEL).c_str());
+    AppendMenuW(deviceMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenuW(deviceMenu, MF_STRING, IDM_DEVICE_OPENFOLDER, LoadStr(IDS_MENU_ITEM_OPENFOLDER).c_str());
+    AppendMenuW(menu, MF_POPUP, (UINT_PTR)deviceMenu, LoadStr(IDS_MENU_DEVICE).c_str());
+
+    HMENU toolsMenu = CreatePopupMenu();
+    AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_SETTINGS, LoadStr(IDS_MENU_ITEM_SETTINGS).c_str());
+    AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_TRAY, LoadStr(IDS_MENU_ITEM_TRAY).c_str());
+    AppendMenuW(toolsMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_AUTOSTART, LoadStr(IDS_MENU_ITEM_AUTOSTART).c_str());
+    AppendMenuW(toolsMenu, MF_STRING, IDM_TOOLS_LOG, LoadStr(IDS_MENU_ITEM_LOG).c_str());
+    AppendMenuW(menu, MF_POPUP, (UINT_PTR)toolsMenu, LoadStr(IDS_MENU_TOOLS).c_str());
+
+    HMENU helpMenu = CreatePopupMenu();
+    AppendMenuW(helpMenu, MF_STRING, IDM_HELP_GUIDE, LoadStr(IDS_MENU_ITEM_HELP).c_str());
+    AppendMenuW(helpMenu, MF_STRING, IDM_HELP_PROTOCOL, LoadStr(IDS_MENU_ITEM_PROTOCOL).c_str());
+    AppendMenuW(helpMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenuW(helpMenu, MF_STRING, IDM_HELP_ABOUT, LoadStr(IDS_MENU_ITEM_ABOUT).c_str());
+    AppendMenuW(menu, MF_POPUP, (UINT_PTR)helpMenu, LoadStr(IDS_MENU_HELP).c_str());
+
+    return menu;
+}
+
+namespace {
+
+void SetColumnText(HWND list, int index, const std::wstring& text)
+{
+    LVCOLUMNW column;
+    ZeroMemory(&column, sizeof(column));
+    column.mask = LVCF_TEXT;
+    column.pszText = (LPWSTR)text.c_str();
+    SendMessageW(list, LVM_SETCOLUMN, (WPARAM)index, (LPARAM)&column);
+}
+
+}  // namespace
+
+// Re-applies every visible text of the main window (used after a language
+// change, and once at start-up).
+void RefreshMainWindowTexts(HWND hwnd)
+{
+    SetWindowTextW(hwnd, LoadStr(IDS_APP_TITLE).c_str());
+
+    // Relabel every child whose text comes from the string table. Walking the
+    // children by control id also covers duplicates of the same group box.
+    HWND child = GetWindow(hwnd, GW_CHILD);
+    while (child != NULL)
+    {
+        switch (GetDlgCtrlID(child))
+        {
+        case IDC_DEVICE_GROUP:
+            SetWindowTextW(child, LoadStr(IDS_GROUP_DEVICES).c_str());
+            break;
+        case IDC_TRANSFER_GROUP:
+            SetWindowTextW(child, LoadStr(IDS_GROUP_TRANSFERS).c_str());
+            break;
+        case IDC_BTN_SEND:
+            SetWindowTextW(child, LoadStr(IDS_BTN_SEND).c_str());
+            break;
+        case IDC_BTN_REFRESH:
+            SetWindowTextW(child, LoadStr(IDS_BTN_REFRESH).c_str());
+            break;
+        case IDC_BTN_SETTINGS:
+            SetWindowTextW(child, LoadStr(IDS_BTN_SETTINGS).c_str());
+            break;
+        default:
+            break;
+        }
+        child = GetWindow(child, GW_HWNDNEXT);
+    }
+
+    if (g_window.deviceGroup != NULL)
+    {
+        SetWindowTextW(g_window.deviceGroup, LoadStr(IDS_GROUP_DEVICES).c_str());
+    }
+    if (g_window.transferGroup != NULL)
+    {
+        SetWindowTextW(g_window.transferGroup, LoadStr(IDS_GROUP_TRANSFERS).c_str());
+    }
+    if (g_window.sendButton != NULL)
+    {
+        SetWindowTextW(g_window.sendButton, LoadStr(IDS_BTN_SEND).c_str());
+    }
+    if (g_window.refreshButton != NULL)
+    {
+        SetWindowTextW(g_window.refreshButton, LoadStr(IDS_BTN_REFRESH).c_str());
+    }
+    if (g_window.settingsButton != NULL)
+    {
+        SetWindowTextW(g_window.settingsButton, LoadStr(IDS_BTN_SETTINGS).c_str());
+    }
+
+    for (size_t i = 0;
+         i < g_window.toolbarTextIds.size() && i < g_window.toolbarCommandIds.size() &&
+         g_window.toolbar != NULL;
+         ++i)
+    {
+        std::wstring text = LoadStr(g_window.toolbarTextIds[i]);
+        TBBUTTONINFOW info;
+        ZeroMemory(&info, sizeof(info));
+        info.cbSize = sizeof(info);
+        info.dwMask = TBIF_TEXT;
+        info.pszText = (LPWSTR)text.c_str();
+        // TB_SETBUTTONINFO is addressed by command id, not by button index.
+        if (!SendMessageW(g_window.toolbar, TB_SETBUTTONINFO,
+                          (WPARAM)g_window.toolbarCommandIds[i], (LPARAM)&info))
+        {
+            LogLine("toolbar: could not set text for command %d",
+                    g_window.toolbarCommandIds[i]);
+        }
+    }
+    if (g_window.toolbar != NULL)
+    {
+        SendMessageW(g_window.toolbar, TB_AUTOSIZE, 0, 0);
+        RedrawWindow(g_window.toolbar, NULL, NULL,
+                     RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+    }
+
+    for (size_t i = 0; i < g_window.deviceColumnIds.size() && g_window.deviceList != NULL; ++i)
+    {
+        SetColumnText(g_window.deviceList, (int)i, LoadStr(g_window.deviceColumnIds[i]));
+    }
+    for (size_t i = 0; i < g_window.transferColumnIds.size() && g_window.transferList != NULL; ++i)
+    {
+        SetColumnText(g_window.transferList, (int)i, LoadStr(g_window.transferColumnIds[i]));
+    }
+
+    HMENU menu = BuildMainMenu();
+    if (menu != NULL)
+    {
+        HMENU old = GetMenu(hwnd);
+        SetMenu(hwnd, menu);
+        if (old != NULL)
+        {
+            DestroyMenu(old);
+        }
+        DrawMenuBar(hwnd);
+    }
+
+    RefreshDeviceList(hwnd);
+    RefreshTransferList(hwnd);
+    UpdateStatusText(hwnd, LoadStr(IDS_STATUS_ONLINE));
+    LayoutMainWindow(hwnd);
+    RedrawWindow(hwnd, NULL, NULL,
+                 RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+}
+
 HWND CreateMainWindow(HINSTANCE instance)
 {
     WNDCLASSEXW windowClass;
@@ -836,7 +1031,7 @@ HWND CreateMainWindow(HINSTANCE instance)
     windowClass.hIcon = LoadAppIcon(32);
     windowClass.hCursor = LoadCursorW(NULL, IDC_ARROW);
     windowClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-    windowClass.lpszMenuName = MAKEINTRESOURCEW(IDR_MAINMENU);
+    windowClass.lpszMenuName = NULL;   // the menu is built at run time (localizable)
     windowClass.lpszClassName = MAIN_WINDOW_CLASS;
     windowClass.hIconSm = LoadAppIcon(16);
 

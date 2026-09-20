@@ -113,6 +113,10 @@ bool OpenPathWithShell(const std::wstring& path);
 bool CopyTextToClipboard(HWND owner, const std::wstring& text);
 
 // ---- UI strings ---------------------------------------------------------
+// Resource language used by LoadStr()/FormatStr() and the dialog loader.
+void SetResourceLanguage(WORD languageId);
+WORD ResourceLanguage();
+
 std::wstring LoadStr(int id);
 std::wstring FormatStr(int id, ...);
 std::wstring FormatStr1(int id, const std::wstring& a);

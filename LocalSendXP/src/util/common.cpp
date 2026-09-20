@@ -1157,17 +1157,71 @@ bool CopyTextToClipboard(HWND owner, const std::wstring& text)
 }
 
 // ------------------------------------------------------------ UI strings
+namespace {
+
+WORD g_resourceLanguage = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
+
+}  // namespace
+
+void SetResourceLanguage(WORD languageId)
+{
+    g_resourceLanguage = languageId;
+}
+
+WORD ResourceLanguage()
+{
+    return g_resourceLanguage;
+}
+
+// Reads a string table entry for the currently selected language. The string
+// table format is 16 entries per block, each preceded by its length in wchars.
 std::wstring LoadStr(int id)
 {
-    wchar_t buffer[2048];
-    buffer[0] = L'\0';
-    int length = LoadStringW(GetModuleHandleW(NULL), id, buffer, 2047);
-    if (length <= 0)
+    HINSTANCE instance = GetModuleHandleW(NULL);
+    UINT blockId = ((UINT)id >> 4) + 1;
+
+    HRSRC resource = FindResourceExW(instance, RT_STRING,
+                                     MAKEINTRESOURCEW(blockId), ResourceLanguage());
+    if (resource == NULL)
+    {
+        resource = FindResourceW(instance, MAKEINTRESOURCEW(blockId), RT_STRING);
+    }
+    if (resource == NULL)
     {
         return FormatW(L"#%d", id);
     }
-    buffer[2047] = L'\0';
-    return std::wstring(buffer, (size_t)length);
+
+    HGLOBAL loaded = LoadResource(instance, resource);
+    const BYTE* data = (const BYTE*)LockResource(loaded);
+    DWORD size = SizeofResource(instance, resource);
+    if (data == NULL || size == 0)
+    {
+        return FormatW(L"#%d", id);
+    }
+
+    const BYTE* cursor = data;
+    const BYTE* end = data + size;
+    const int wanted = id & 0x0F;
+
+    for (int index = 0; index < 16; ++index)
+    {
+        if (cursor + sizeof(WORD) > end)
+        {
+            break;
+        }
+        WORD length = *(const WORD*)cursor;
+        cursor += sizeof(WORD);
+        if (cursor + (size_t)length * sizeof(wchar_t) > end)
+        {
+            break;
+        }
+        if (index == wanted)
+        {
+            return std::wstring((const wchar_t*)cursor, (size_t)length);
+        }
+        cursor += (size_t)length * sizeof(wchar_t);
+    }
+    return FormatW(L"#%d", id);
 }
 
 std::wstring FormatStr(int id, ...)

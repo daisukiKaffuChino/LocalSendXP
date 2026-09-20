@@ -26,6 +26,8 @@ INT_PTR CALLBACK ReceiveProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lP
             }
 
             SetWindowTextW(dialog, LoadStr(IDS_RECEIVE_TITLE).c_str());
+            ApplyText(dialog, IDOK, IDS_RECEIVE_ACCEPT);
+            ApplyText(dialog, IDCANCEL, IDS_RECEIVE_DENY);
 
             std::wstring info = FormatStr(IDS_FMT_RECEIVE_INFO,
                                           Utf8ToWide(prompt->peerAlias).c_str(),
@@ -133,6 +135,11 @@ INT_PTR CALLBACK PinProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam
     {
     case WM_INITDIALOG:
         SetDialogFont(dialog);
+        SetWindowLongPtrW(dialog, DWLP_USER, (LONG_PTR)lParam);
+        SetWindowTextW(dialog, LoadStr(IDS_PIN_TITLE).c_str());
+        ApplyText(dialog, IDC_PIN_INFO, IDS_PIN_INFO);
+        ApplyText(dialog, IDOK, IDS_BTN_OK);
+        ApplyText(dialog, IDCANCEL, IDS_BTN_CANCEL);
         SetFocus(GetDlgItem(dialog, IDC_PIN_EDIT));
         return FALSE;
 
@@ -176,16 +183,16 @@ INT_PTR CALLBACK PinProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam
 
 int ShowReceiveDialog(HWND parent, IncomingPrompt* prompt)
 {
-    INT_PTR result = DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_RECEIVE),
-                                     parent, ReceiveProc, (LPARAM)prompt);
+    INT_PTR result = LxpDialogBoxParam(GetModuleHandleW(NULL), IDD_RECEIVE,
+                                       parent, ReceiveProc, (LPARAM)prompt);
     return (int)result;
 }
 
 bool ShowPinDialog(HWND parent, std::string& pin)
 {
     std::string entered;
-    INT_PTR result = DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_PIN),
-                                     parent, PinProc, (LPARAM)&entered);
+    INT_PTR result = LxpDialogBoxParam(GetModuleHandleW(NULL), IDD_PIN,
+                                       parent, PinProc, (LPARAM)&entered);
     if (result != IDOK || entered.empty())
     {
         return false;

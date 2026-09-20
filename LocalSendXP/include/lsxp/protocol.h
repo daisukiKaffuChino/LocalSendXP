@@ -80,6 +80,18 @@ std::string NewRandomId();
 std::string RequestPath(const std::string& target);
 std::string QueryParam(const std::string& target, const std::string& key);
 
+// "http" or "https": what we announce and what our own server speaks.
+void               SetLocalProtocol(const std::string& protocol);
+const std::string& LocalProtocol();
+
+// The fingerprint we advertise: a random string in HTTP mode, the SHA-256 of
+// our certificate in HTTPS mode (LocalSend protocol v2).
+void               SetLocalFingerprint(const std::string& fingerprint);
+const std::string& LocalFingerprint();
+
+// Configures request.connection for the transport a peer announced.
+void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request);
+
 // ---- outgoing (we are the sender) ---------------------------------------
 bool SendRegister(const Device& device,
                   const Config& config,
@@ -121,12 +133,15 @@ bool ParseShareUrl(const std::string& url,
                    unsigned short& port,
                    std::string& sessionId,
                    std::string& pin,
+                   bool& secure,
                    std::string& errorText);
 
 bool FetchShareList(const std::string& ip,
                     unsigned short port,
                     std::string& sessionId,
                     const std::string& pin,
+                    bool secure,
+                    const Config& config,
                     std::string& peerAlias,
                     std::vector<SharedFileInfo>& files,
                     int& httpStatus,
@@ -136,6 +151,8 @@ bool DownloadSharedFile(const std::string& ip,
                         unsigned short port,
                         const std::string& sessionId,
                         const std::string& fileId,
+                        bool secure,
+                        const Config& config,
                         const std::wstring& targetPath,
                         uint64 expectedSize,
                         ITransferProgress* progress,

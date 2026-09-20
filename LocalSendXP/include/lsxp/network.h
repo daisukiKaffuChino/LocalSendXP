@@ -8,6 +8,20 @@ namespace lsxp {
 bool WinsockStartup(std::string& errorText);
 void WinsockCleanup();
 
+// Byte stream abstraction. The HTTP layer talks to this interface only, so it
+// never has to know whether the bytes travel over plain TCP or through TLS.
+class IStream
+{
+public:
+    virtual ~IStream() {}
+    virtual bool SendAll(const void* data, int length, std::string& errorText) = 0;
+    virtual int  Recv(void* buffer, int capacity, DWORD timeoutMs) = 0;
+    virtual void Close() = 0;
+    virtual bool IsOpen() const = 0;
+    virtual std::string PeerIp() const = 0;
+    virtual unsigned short PeerPort() const = 0;
+};
+
 class UdpSocket
 {
 public:
@@ -34,24 +48,24 @@ private:
     unsigned short m_port;
 };
 
-class TcpSocket
+class TcpSocket : public IStream
 {
 public:
     TcpSocket();
-    ~TcpSocket();
+    virtual ~TcpSocket();
 
     bool Connect(const std::string& ip, unsigned short port, DWORD timeoutMs, std::string& errorText);
     bool Attach(SOCKET handle);
-    bool SendAll(const void* data, int length, std::string& errorText);
+    virtual bool SendAll(const void* data, int length, std::string& errorText);
     // Returns bytes read, 0 when the peer closed the connection, -1 on error.
-    int  Recv(void* buffer, int capacity, DWORD timeoutMs);
-    void Close();
+    virtual int  Recv(void* buffer, int capacity, DWORD timeoutMs);
+    virtual void Close();
+    virtual bool IsOpen() const { return m_socket != INVALID_SOCKET; }
+    virtual std::string PeerIp() const { return m_peerIp; }
+    virtual unsigned short PeerPort() const { return m_peerPort; }
 
     void SetNoDelay(bool enable);
     SOCKET Handle() const { return m_socket; }
-    bool IsOpen() const { return m_socket != INVALID_SOCKET; }
-    std::string PeerIp() const { return m_peerIp; }
-    unsigned short PeerPort() const { return m_peerPort; }
     void SetPeer(const std::string& ip, unsigned short port);
 
 private:

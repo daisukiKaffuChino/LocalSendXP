@@ -103,6 +103,13 @@ void Config::ApplyDefaults()
     windowWidth = 0;
     windowHeight = 0;
     windowMaximized = false;
+    httpsEnabled = true;
+    allowInsecureHttps = false;
+    allowLegacyTls = false;
+    requireClientCertificate = false;
+    certificatePath.clear();
+    caBundlePath.clear();
+    language = "zh";
     fingerprint = RandomHex(16);
     m_iniPath = GetConfigFilePathW();
     m_wasCreated = false;
@@ -164,6 +171,18 @@ void Config::Load()
         Save();
     }
 
+    httpsEnabled = ReadIniString(m_iniPath, L"security", L"https", L"1") != L"0";
+    allowInsecureHttps = ReadIniString(m_iniPath, L"security", L"allowInsecureHttps", L"0") == L"1";
+    allowLegacyTls = ReadIniString(m_iniPath, L"security", L"allowLegacyTls", L"0") == L"1";
+    requireClientCertificate = ReadIniString(m_iniPath, L"security", L"requireClientCertificate", L"0") == L"1";
+    certificatePath = ReadIniString(m_iniPath, L"security", L"certificate", L"");
+    caBundlePath = ReadIniString(m_iniPath, L"security", L"caBundle", L"");
+    language = ReadIniAnsi(m_iniPath, L"general", L"language", "zh");
+    if (language != "en")
+    {
+        language = "zh";
+    }
+
     windowX = GetPrivateProfileIntW(L"window", L"x", 0, m_iniPath.c_str());
     windowY = GetPrivateProfileIntW(L"window", L"y", 0, m_iniPath.c_str());
     windowWidth = GetPrivateProfileIntW(L"window", L"width", 0, m_iniPath.c_str());
@@ -198,6 +217,7 @@ void Config::Save() const
     WriteIniBool(m_iniPath, L"general", L"autoStart", autoStart);
     WriteIniInt(m_iniPath, L"general", L"announceInterval", announceIntervalSec);
     WriteIniString(m_iniPath, L"general", L"fingerprint", AnsiToWide(fingerprint.c_str()));
+    WriteIniString(m_iniPath, L"general", L"language", AnsiToWide(language.c_str()));
 
     WriteIniString(m_iniPath, L"network", L"multicastGroup", AnsiToWide(LSXP_MULTICAST_GROUP));
     WriteIniInt(m_iniPath, L"network", L"httpPort", port);
@@ -211,6 +231,13 @@ void Config::Save() const
         WriteIniInt(m_iniPath, L"window", L"height", windowHeight);
         WriteIniBool(m_iniPath, L"window", L"maximized", windowMaximized);
     }
+
+    WriteIniBool(m_iniPath, L"security", L"https", httpsEnabled);
+    WriteIniBool(m_iniPath, L"security", L"allowInsecureHttps", allowInsecureHttps);
+    WriteIniBool(m_iniPath, L"security", L"allowLegacyTls", allowLegacyTls);
+    WriteIniBool(m_iniPath, L"security", L"requireClientCertificate", requireClientCertificate);
+    WriteIniString(m_iniPath, L"security", L"certificate", certificatePath);
+    WriteIniString(m_iniPath, L"security", L"caBundle", caBundlePath);
 }
 
 std::wstring Config::ResolvedDownloadDirectory() const
@@ -225,6 +252,33 @@ std::wstring Config::ResolvedDownloadDirectory() const
         EnsureDirectoryW(directory);
     }
     return directory;
+}
+
+std::wstring Config::ResolvedCertificatePath() const
+{
+    if (!certificatePath.empty())
+    {
+        return certificatePath;
+    }
+    return JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.pem");
+}
+
+std::wstring Config::ResolvedCaBundlePath() const
+{
+    if (!caBundlePath.empty())
+    {
+        return caBundlePath;
+    }
+    return JoinPathW(JoinPathW(GetModuleDirectoryW(), L"certs"), L"ca-bundle.crt");
+}
+
+WORD Config::ResourceLanguageId() const
+{
+    if (language == "en")
+    {
+        return MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+    }
+    return MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
 }
 
 }  // namespace lsxp

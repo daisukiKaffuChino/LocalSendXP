@@ -29,6 +29,7 @@ App::App()
       m_server(NULL),
       m_serverHandler(NULL),
       m_serverRunning(false),
+      m_httpsActive(false),
       m_quitting(0),
       m_incomingBusy(0)
 {
@@ -92,6 +93,7 @@ bool App::Init(HINSTANCE instance, const std::wstring& commandLine)
     }
 
     m_config.Load();
+    SetResourceLanguage(m_config.ResourceLanguageId());
     LogInit(JoinPathW(GetModuleDirectoryW(), L"LocalSendXP.log"));
     LogLine("---- startup: %s (port %d, fingerprint %s) ----",
             WideToUtf8(m_config.alias).c_str(), m_config.port, m_config.fingerprint.c_str());
@@ -347,9 +349,25 @@ void App::SendFiles(const Device& device, const std::vector<std::wstring>& paths
 
     if (device.protocol == "https")
     {
-        MessageBoxW(m_mainWindow, LoadStr(IDS_MSG_ENCRYPTED_PEER).c_str(),
-                    LoadStr(IDS_APP_TITLE).c_str(), MB_ICONINFORMATION | MB_OK);
-        return;
+        // HTTPS is a first class transport now; it only needs the TLS layer.
+        if (!m_httpsActive)
+        {
+            MessageBoxW(m_mainWindow, LoadStr(IDS_MSG_HTTPS_DISABLED).c_str(),
+                        LoadStr(IDS_APP_TITLE).c_str(), MB_ICONINFORMATION | MB_OK);
+            return;
+        }
+        if (!TlsAvailable())
+        {
+            MessageBoxW(m_mainWindow, LoadStr(IDS_MSG_TLS_MISSING).c_str(),
+                        LoadStr(IDS_APP_TITLE).c_str(), MB_ICONWARNING | MB_OK);
+            return;
+        }
+        if (device.fingerprint.empty())
+        {
+            MessageBoxW(m_mainWindow, LoadStr(IDS_MSG_TLS_NOFINGERPRINT).c_str(),
+                        LoadStr(IDS_APP_TITLE).c_str(), MB_ICONWARNING | MB_OK);
+            return;
+        }
     }
 
     Transfer* transfer = new Transfer();
@@ -445,6 +463,21 @@ void App::ShareFiles(const std::vector<std::wstring>& paths)
     ui::ShowShareDialog(m_mainWindow, url);
 }
 
+// Switches the interface language: new resources are picked up immediately,
+// the main window re-labels itself and the choice is stored in the ini.
+void App::ApplyLanguageChange()
+{
+    SetResourceLanguage(m_config.ResourceLanguageId());
+    m_config.Save();
+
+    if (m_mainWindow != NULL)
+    {
+        ui::RefreshMainWindowTexts(m_mainWindow);
+        ui::UpdateStatusText(m_mainWindow, LoadStr(IDS_MSG_LANG_CHANGED));
+    }
+    LogLine("interface language switched to %s", m_config.language.c_str());
+}
+
 void App::ApplySettingChange()
 {
     m_config.Save();
@@ -473,8 +506,45 @@ bool App::StartServices(std::string& errorText)
     m_serverHandler = new proto::ServerHandler();
     m_server = new HttpServer();
 
-    if (!m_server->Start((unsigned short)m_config.port, m_serverHandler, errorText))
+    // HTTPS: bring up the TLS layer first (the DLLs may be missing on a bare
+    // installation, in which case we simply stay on plain HTTP).
+    bool useHttps = false;
+    if (m_config.httpsEnabled)
     {
+        if (!TlsAvailable())
+        {
+            LogLine("HTTPS requested but libeay32.dll / ssleay32.dll are missing - staying on HTTP");
+        }
+        else
+        {
+            std::string tlsError;
+            if (TlsContext::Instance().Start(m_config.ResolvedCertificatePath(),
+                                             m_config.ResolvedCaBundlePath(),
+                                             m_config.requireClientCertificate,
+                                             m_config.allowLegacyTls,
+                                             tlsError))
+            {
+                useHttps = true;
+                LogLine("HTTPS enabled (certificate %s)",
+                        WideToUtf8(m_config.ResolvedCertificatePath()).c_str());
+            }
+            else
+            {
+                LogLine("TLS initialisation failed: %s", tlsError.c_str());
+            }
+        }
+    }
+
+    m_httpsActive = useHttps;
+    proto::SetLocalProtocol(useHttps ? "https" : "http");
+    proto::SetLocalFingerprint(useHttps ? TlsContext::Instance().Fingerprint()
+                                        : m_config.fingerprint);
+
+    if (!m_server->Start((unsigned short)m_config.port, m_serverHandler,
+                         useHttps, m_config.allowLegacyTls, errorText))
+    {
+        TlsContext::Instance().Stop();
+        m_httpsActive = false;
         delete m_server;
         m_server = NULL;
         delete m_serverHandler;
@@ -484,6 +554,8 @@ bool App::StartServices(std::string& errorText)
     m_serverRunning = true;
 
     m_discovery = new DiscoveryService();
+    // The fingerprint must be set before the first announcement goes out.
+    m_discovery->SetFingerprint(proto::LocalFingerprint());
     if (!m_discovery->Start(this, &m_config, &m_devices))
     {
         LogLine("discovery service failed to start; device discovery is disabled");
@@ -493,6 +565,9 @@ bool App::StartServices(std::string& errorText)
 
 void App::StopServices()
 {
+    TlsContext::Instance().Stop();
+    m_httpsActive = false;
+
     if (m_discovery != NULL)
     {
         m_discovery->Stop();
@@ -694,20 +769,21 @@ void App::ReceiveFromUrl(const std::wstring& url)
     std::string pin;
     std::string errorText;
     unsigned short port = 0;
+    bool secure = false;
 
-    if (!proto::ParseShareUrl(WideToUtf8(url), ip, port, sessionId, pin, errorText))
+    if (!proto::ParseShareUrl(WideToUtf8(url), ip, port, sessionId, pin, secure, errorText))
     {
         std::wstring message;
-        if (errorText == "https")
-        {
-            message = LoadStr(IDS_MSG_URL_HTTPS);
-        }
-        else
-        {
-            message = FormatStr(IDS_MSG_URL_INVALID, Utf8ToWide(errorText).c_str());
-        }
+        message = FormatStr(IDS_MSG_URL_INVALID, Utf8ToWide(errorText).c_str());
         MessageBoxW(m_mainWindow, message.c_str(), LoadStr(IDS_APP_TITLE).c_str(),
                     MB_ICONWARNING | MB_OK);
+        return;
+    }
+
+    if (secure && !m_config.allowInsecureHttps && !TlsAvailable())
+    {
+        MessageBoxW(m_mainWindow, LoadStr(IDS_MSG_TLS_MISSING).c_str(),
+                    LoadStr(IDS_APP_TITLE).c_str(), MB_ICONWARNING | MB_OK);
         return;
     }
 
@@ -731,6 +807,7 @@ void App::ReceiveFromUrl(const std::wstring& url)
     job->sessionId = sessionId;
     job->pin = pin;
     job->saveDirectory = transfer->saveDirectory;
+    job->secure = secure;
 
     HANDLE thread = CreateThread(NULL, 0, &App::ReceiveThreadEntry, job, 0, NULL);
     if (thread == NULL)
@@ -761,6 +838,7 @@ void App::RunReceiveJob(ReceiveJob* job)
     std::string sessionId = job->sessionId;
     const std::string pin = job->pin;
     const std::string saveDirectoryUtf8 = job->saveDirectory;
+    const bool secure = job->secure;
     delete job;
 
     std::vector<SharedFileInfo> remoteFiles;
@@ -768,7 +846,7 @@ void App::RunReceiveJob(ReceiveJob* job)
     std::string errorText;
     int httpStatus = 0;
 
-    if (!proto::FetchShareList(ip, port, sessionId, pin, peerAlias,
+    if (!proto::FetchShareList(ip, port, sessionId, pin, secure, m_config, peerAlias,
                                remoteFiles, httpStatus, errorText))
     {
         TransferState state = (httpStatus == 401) ? TS_PIN_REQUIRED : TS_FAILED;
@@ -833,7 +911,8 @@ void App::RunReceiveJob(ReceiveJob* job)
         httpStatus = 0;
         errorText.clear();
 
-        if (!proto::DownloadSharedFile(ip, port, sessionId, files[i].id, files[i].path,
+        if (!proto::DownloadSharedFile(ip, port, sessionId, files[i].id, secure, m_config,
+                                       files[i].path,
                                        files[i].size, &progress, &transfer->cancelRequested,
                                        httpStatus, errorText))
         {

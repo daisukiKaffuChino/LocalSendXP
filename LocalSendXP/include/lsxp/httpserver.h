@@ -15,8 +15,9 @@ public:
     HttpRequest*    request;
     HttpBodyReader* body;
     HttpResponse*   response;
-    TcpSocket*      socket;
+    IStream*        socket;
     std::string     clientIp;
+    std::string     clientFingerprint;   // TLS client certificate, empty for HTTP
     bool            keepAlive;
 
     bool ReadBody(std::string& out, int64 maxBytes, std::string& errorText);
@@ -37,7 +38,8 @@ public:
     HttpServer();
     ~HttpServer();
 
-    bool Start(unsigned short port, IHttpHandler* handler, std::string& errorText);
+    bool Start(unsigned short port, IHttpHandler* handler,
+               bool useHttps, bool allowLegacyTls, std::string& errorText);
     void Stop();
     bool IsRunning() const;
     unsigned short BoundPort() const { return m_port; }
@@ -60,7 +62,7 @@ private:
                           int64& bodyLength,
                           bool& chunked);
     bool WriteResponse(HttpResponse& response,
-                       TcpSocket& socket,
+                       IStream& socket,
                        bool keepAlive,
                        std::string& errorText);
 
@@ -70,6 +72,8 @@ private:
     HANDLE        m_thread;
     unsigned short m_port;
     volatile LONG m_activeConnections;
+    bool          m_useHttps;
+    bool          m_allowLegacyTls;
 };
 
 }  // namespace lsxp

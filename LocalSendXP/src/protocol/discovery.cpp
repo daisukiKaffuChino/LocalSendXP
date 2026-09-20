@@ -53,7 +53,12 @@ bool DiscoveryService::Start(App* app, Config* config, DeviceManager* devices)
     m_app = app;
     m_config = config;
     m_devices = devices;
-    m_fingerprint = config->fingerprint;
+    if (m_fingerprint.empty())
+    {
+        // HTTPS mode advertises the certificate hash instead; the caller sets
+        // that before starting us.
+        m_fingerprint = config->fingerprint;
+    }
 
     std::string errorText;
     if (!m_socket.Open((unsigned short)config->port, true, errorText))

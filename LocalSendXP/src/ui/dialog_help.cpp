@@ -16,6 +16,7 @@ INT_PTR CALLBACK HelpProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPara
         SetDialogFont(dialog);
         SetWindowTextW(dialog, LoadStr(IDS_HELP_TITLE).c_str());
         SetDlgItemTextW(dialog, IDC_HELP_TEXT, LoadStr(IDS_HELP_TEXT).c_str());
+        ApplyText(dialog, IDCANCEL, IDS_BTN_CLOSE);
         SendDlgItemMessageW(dialog, IDC_HELP_TEXT, EM_SETSEL, 0, 0);
         SetFocus(GetDlgItem(dialog, IDCANCEL));
         return FALSE;
@@ -46,8 +47,7 @@ INT_PTR CALLBACK HelpProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPara
 
 bool ShowHelpDialog(HWND parent)
 {
-    DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_HELP),
-                    parent, HelpProc, 0);
+    LxpDialogBoxParam(GetModuleHandleW(NULL), IDD_HELP, parent, HelpProc, 0);
     return true;
 }
 

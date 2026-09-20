@@ -65,6 +65,12 @@ INT_PTR CALLBACK UrlProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam
             SetDialogFont(dialog);
             SetWindowLongPtrW(dialog, DWLP_USER, (LONG_PTR)lParam);
 
+            SetWindowTextW(dialog, LoadStr(IDS_TB_FROMURL).c_str());
+            ApplyText(dialog, IDC_URL_INFO, IDS_URL_INFO);
+            ApplyText(dialog, IDC_URL_HINT, IDS_URL_HINT);
+            ApplyText(dialog, IDOK, IDS_BTN_OK);
+            ApplyText(dialog, IDCANCEL, IDS_BTN_CANCEL);
+
             std::wstring fromClipboard = ClipboardUrl(dialog);
             if (!fromClipboard.empty())
             {
@@ -126,8 +132,8 @@ INT_PTR CALLBACK UrlProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam
 bool ShowUrlDialog(HWND parent, std::wstring& url)
 {
     std::wstring entered;
-    INT_PTR result = DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_URL),
-                                     parent, UrlProc, (LPARAM)&entered);
+    INT_PTR result = LxpDialogBoxParam(GetModuleHandleW(NULL), IDD_URL,
+                                       parent, UrlProc, (LPARAM)&entered);
     if (result != IDOK || entered.empty())
     {
         return false;

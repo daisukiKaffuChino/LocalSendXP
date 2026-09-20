@@ -125,6 +125,8 @@ bool PrepareUpload(const Device& device,
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", FormatUInt((uint64)request.body.size()));
 
+    ApplyDeviceSecurity(device, config, request);
+
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, 5000, errorText))
     {
@@ -206,6 +208,8 @@ bool UploadFile(const Device& device,
     UploadBridge bridge;
     bridge.progress = progress;
 
+    ApplyDeviceSecurity(device, config, request);
+
     HttpResponse response;
     bool ok = HttpClient::ExecuteStreaming(device.ip, device.port, request, response,
                                            8000, &UploadBridgeCallback, &bridge, NULL, errorText);
@@ -244,6 +248,8 @@ bool CancelUpload(const Device& device,
     request.path = "/api/localsend/v2/cancel?sessionId=" + UrlEncode(sessionId);
     request.SetHeader("Content-Length", "0");
 
+    ApplyDeviceSecurity(device, config, request);
+
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, 3000, errorText))
     {
@@ -278,6 +284,8 @@ bool PrepareUploadV1(const Device& device,
     request.body = root.Serialize();
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", FormatUInt((uint64)request.body.size()));
+
+    ApplyDeviceSecurity(device, config, request);
 
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, 5000, errorText))
@@ -339,6 +347,8 @@ bool UploadFileV1(const Device& device,
     UploadBridge bridge;
     bridge.progress = progress;
 
+    ApplyDeviceSecurity(device, config, request);
+
     HttpResponse response;
     bool ok = HttpClient::ExecuteStreaming(device.ip, device.port, request, response,
                                            8000, &UploadBridgeCallback, &bridge, NULL, errorText);
@@ -364,6 +374,8 @@ bool CancelUploadV1(const Device& device, const Config& config, std::string& err
     request.method = "POST";
     request.path = "/api/localsend/v1/cancel";
     request.SetHeader("Content-Length", "0");
+
+    ApplyDeviceSecurity(device, config, request);
 
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, 3000, errorText))
@@ -444,6 +456,16 @@ bool ServerHandler::HandlePrepareUpload(HttpContext& context)
     {
         peer.version = "1.0";
     }
+
+    if (!context.clientFingerprint.empty() && !peer.fingerprint.empty() &&
+        !EqualsNoCase(peer.fingerprint, context.clientFingerprint))
+    {
+        LogLine("upload request from %s rejected: certificate fingerprint mismatch",
+                context.clientIp.c_str());
+        context.response->SetText(403, "Forbidden", "certificate fingerprint mismatch");
+        return true;
+    }
+
     app.Devices().AddOrUpdate(peer, NULL);
     app.NotifyDevicesChanged();
 

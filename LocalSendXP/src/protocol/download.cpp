@@ -34,6 +34,23 @@ struct DownloadBridge
     ITransferProgress* progress;
 };
 
+// HTTPS URLs typed by the user have no LocalSend fingerprint, so the trust
+// anchor is the CA bundle (and only the explicit opt-in disables checking).
+void ApplyShareSecurity(bool secure, const std::string& host,
+                        const Config& config, HttpRequest& request)
+{
+    request.connection.secure = secure;
+    request.connection.allowLegacyTls = config.allowLegacyTls;
+    if (!secure)
+    {
+        return;
+    }
+    request.connection.hostName = host;
+    request.connection.verifyMode = config.allowInsecureHttps
+                                    ? TLS_VERIFY_ALLOW_INSECURE
+                                    : TLS_VERIFY_CA;
+}
+
 bool DownloadBridgeCallback(void* context, int64 received, int64 total)
 {
     DownloadBridge* bridge = (DownloadBridge*)context;
@@ -368,8 +385,10 @@ bool ParseShareUrl(const std::string& url,
                    unsigned short& port,
                    std::string& sessionId,
                    std::string& pin,
+                   bool& secure,
                    std::string& errorText)
 {
+    secure = false;
     std::string text = Trim(url);
     if (text.empty())
     {
@@ -384,10 +403,10 @@ bool ParseShareUrl(const std::string& url,
     std::string lower = ToLower(text);
     if (StartsWith(lower, "https://"))
     {
-        errorText = "https";
-        return false;
+        secure = true;
+        text = text.substr(8);
     }
-    if (StartsWith(lower, "http://"))
+    else if (StartsWith(lower, "http://"))
     {
         text = text.substr(7);
     }
@@ -449,6 +468,8 @@ bool FetchShareList(const std::string& ip,
                     unsigned short port,
                     std::string& sessionId,
                     const std::string& pin,
+                    bool secure,
+                    const Config& config,
                     std::string& peerAlias,
                     std::vector<SharedFileInfo>& files,
                     int& httpStatus,
@@ -480,6 +501,7 @@ bool FetchShareList(const std::string& ip,
     }
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", "0");
+    ApplyShareSecurity(secure, ip, config, request);
 
     HttpResponse response;
     if (!HttpClient::Execute(ip, port, request, response, 5000, errorText))
@@ -536,6 +558,8 @@ bool DownloadSharedFile(const std::string& ip,
                         unsigned short port,
                         const std::string& sessionId,
                         const std::string& fileId,
+                        bool secure,
+                        const Config& config,
                         const std::wstring& targetPath,
                         uint64 expectedSize,
                         ITransferProgress* progress,
@@ -557,6 +581,7 @@ bool DownloadSharedFile(const std::string& ip,
     request.path = Format("/api/localsend/v2/download?sessionId=%s&fileId=%s",
                           UrlEncode(sessionId).c_str(), UrlEncode(fileId).c_str());
     request.SetHeader("Accept", "application/octet-stream");
+    ApplyShareSecurity(secure, ip, config, request);
 
     DownloadBridge bridge;
     bridge.progress = progress;

@@ -128,6 +128,43 @@ int TypeTextId(const std::string& deviceType)
     return IDS_TYPE_UNKNOWN;
 }
 
+INT_PTR LxpDialogBoxParam(HINSTANCE instance, int dialogId, HWND parent, DLGPROC proc, LPARAM param)
+{
+    HRSRC resource = FindResourceExW(instance, RT_DIALOG, MAKEINTRESOURCEW(dialogId),
+                                     ResourceLanguage());
+    if (resource != NULL)
+    {
+        HGLOBAL loaded = LoadResource(instance, resource);
+        const void* data = LockResource(loaded);
+        if (data != NULL)
+        {
+            return DialogBoxIndirectParamW(instance, (LPCDLGTEMPLATEW)data, parent, proc, param);
+        }
+    }
+    return DialogBoxParamW(instance, MAKEINTRESOURCEW(dialogId), parent, proc, param);
+}
+
+HWND LxpCreateDialogParam(HINSTANCE instance, int dialogId, HWND parent, DLGPROC proc, LPARAM param)
+{
+    HRSRC resource = FindResourceExW(instance, RT_DIALOG, MAKEINTRESOURCEW(dialogId),
+                                     ResourceLanguage());
+    if (resource != NULL)
+    {
+        HGLOBAL loaded = LoadResource(instance, resource);
+        const void* data = LockResource(loaded);
+        if (data != NULL)
+        {
+            return CreateDialogIndirectParamW(instance, (LPCDLGTEMPLATEW)data, parent, proc, param);
+        }
+    }
+    return CreateDialogParamW(instance, MAKEINTRESOURCEW(dialogId), parent, proc, param);
+}
+
+void ApplyText(HWND dialog, int controlId, int stringId)
+{
+    SetDlgItemTextW(dialog, controlId, LoadStr(stringId).c_str());
+}
+
 namespace {
 
 const int kToolbarIconSize = 32;

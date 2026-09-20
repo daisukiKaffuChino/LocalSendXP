@@ -12,6 +12,8 @@ namespace ui {
 extern const TCHAR* const MAIN_WINDOW_CLASS;
 
 HWND CreateMainWindow(HINSTANCE instance);
+HMENU BuildMainMenu();
+void  RefreshMainWindowTexts(HWND hwnd);
 void LayoutMainWindow(HWND hwnd);
 void RefreshDeviceList(HWND hwnd);
 void RefreshTransferList(HWND hwnd);
@@ -35,6 +37,10 @@ HIMAGELIST CreateToolbarImages();
 HFONT CreateGuiFont(bool bold);
 void  SetDialogFont(HWND dialog);
 void  FreeDialogFont(HWND dialog);
+// Dialog helpers that pick the template of the currently selected language.
+INT_PTR LxpDialogBoxParam(HINSTANCE instance, int dialogId, HWND parent, DLGPROC proc, LPARAM param);
+HWND    LxpCreateDialogParam(HINSTANCE instance, int dialogId, HWND parent, DLGPROC proc, LPARAM param);
+void    ApplyText(HWND dialog, int controlId, int stringId);
 void  ApplyGuiFont(HWND hwnd, bool bold);
 void  InitListViewColumns(HWND list, const int* stringIds, const int* widths, int count);
 int   TypeTextId(const std::string& deviceType);

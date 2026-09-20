@@ -38,12 +38,26 @@ public:
     int  windowHeight;
     bool windowMaximized;
 
+    // [security] - HTTPS / TLS
+    bool         httpsEnabled;             // default: on
+    bool         allowInsecureHttps;       // default: off (VERIFY_NONE is opt-in only)
+    bool         allowLegacyTls;           // default: off (TLS 1.2 only)
+    bool         requireClientCertificate; // default: off
+    std::wstring certificatePath;          // empty = LocalSendXP.pem next to the exe
+    std::wstring caBundlePath;             // empty = certs\ca-bundle.crt next to the exe
+
+    // "zh" or "en"
+    std::string  language;
+
     // Runtime only
     std::string  fingerprint;
 
     std::string ProtocolName() const { return "http"; }
     bool PinRequired() const { return !pin.empty(); }
     std::wstring ResolvedDownloadDirectory() const;
+    std::wstring ResolvedCertificatePath() const;
+    std::wstring ResolvedCaBundlePath() const;
+    WORD         ResourceLanguageId() const;
 
 private:
     std::wstring m_iniPath;

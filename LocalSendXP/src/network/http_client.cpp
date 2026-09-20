@@ -66,7 +66,7 @@ void ParseHeaderLines(const std::string& head, HttpResponse& response)
     }
 }
 
-bool ReadMore(TcpSocket& socket, std::string& buffer, DWORD timeoutMs, std::string& errorText)
+bool ReadMore(IStream& socket, std::string& buffer, DWORD timeoutMs, std::string& errorText)
 {
     char temp[8192];
     int received = socket.Recv(temp, sizeof(temp), timeoutMs);
@@ -79,7 +79,7 @@ bool ReadMore(TcpSocket& socket, std::string& buffer, DWORD timeoutMs, std::stri
     return true;
 }
 
-bool ReadChunkedBody(TcpSocket& socket, std::string& data, std::string& out,
+bool ReadChunkedBody(IStream& socket, std::string& data, std::string& out,
                      DWORD timeoutMs, std::string& errorText)
 {
     size_t position = 0;
@@ -136,7 +136,7 @@ bool ReadChunkedBody(TcpSocket& socket, std::string& data, std::string& out,
     }
 }
 
-bool PrepareRequest(TcpSocket& socket,
+bool PrepareRequest(IStream& socket,
                     const std::string& ip,
                     unsigned short port,
                     HttpRequest& request,
@@ -174,7 +174,7 @@ bool PrepareRequest(TcpSocket& socket,
     return true;
 }
 
-bool ReadResponseHead(TcpSocket& socket, HttpResponse& response, std::string& leftover,
+bool ReadResponseHead(IStream& socket, HttpResponse& response, std::string& leftover,
                       DWORD timeoutMs, std::string& errorText)
 {
     std::string buffer;
@@ -213,7 +213,7 @@ bool ReadResponseHead(TcpSocket& socket, HttpResponse& response, std::string& le
     }
 }
 
-bool ReadResponse(TcpSocket& socket, HttpResponse& response, DWORD timeoutMs, std::string& errorText)
+bool ReadResponse(IStream& socket, HttpResponse& response, DWORD timeoutMs, std::string& errorText)
 {
     std::string leftover;
     if (!ReadResponseHead(socket, response, leftover, timeoutMs, errorText))
@@ -299,6 +299,13 @@ HttpRequest::HttpRequest()
       fileHandle(INVALID_HANDLE_VALUE),
       fileOffset(0),
       fileLength(-1)
+{
+}
+
+HttpConnectionOptions::HttpConnectionOptions()
+    : secure(false),
+      verifyMode(TLS_VERIFY_FINGERPRINT),
+      allowLegacyTls(false)
 {
 }
 
@@ -521,7 +528,22 @@ bool HttpClient::ExecuteStreaming(const std::string& ip,
         return false;
     }
 
-    if (!PrepareRequest(socket, ip, port, request, errorText))
+    TlsStream tls;
+    IStream* stream = &socket;
+    if (request.connection.secure)
+    {
+        const std::string hostName = request.connection.hostName.empty()
+                                     ? ip : request.connection.hostName;
+        if (!tls.Connect(&socket, hostName, (TlsVerifyMode)request.connection.verifyMode,
+                         request.connection.expectedFingerprint,
+                         request.connection.allowLegacyTls, errorText))
+        {
+            return false;
+        }
+        stream = &tls;
+    }
+
+    if (!PrepareRequest(*stream, ip, port, request, errorText))
     {
         return false;
     }
@@ -557,7 +579,7 @@ bool HttpClient::ExecuteStreaming(const std::string& ip,
                 errorText = "file shrank while sending";
                 return false;
             }
-            if (!socket.SendAll(&buffer[0], (int)read, errorText))
+            if (!stream->SendAll(&buffer[0], (int)read, errorText))
             {
                 return false;
             }
@@ -586,7 +608,7 @@ bool HttpClient::ExecuteStreaming(const std::string& ip,
         }
     }
 
-    if (!ReadResponse(socket, response, kIoTimeoutMs, errorText))
+    if (!ReadResponse(*stream, response, kIoTimeoutMs, errorText))
     {
         return false;
     }
@@ -624,13 +646,28 @@ bool HttpClient::DownloadToFile(const std::string& ip,
         return false;
     }
 
-    if (!PrepareRequest(socket, ip, port, request, errorText))
+    TlsStream tls;
+    IStream* stream = &socket;
+    if (request.connection.secure)
+    {
+        const std::string hostName = request.connection.hostName.empty()
+                                     ? ip : request.connection.hostName;
+        if (!tls.Connect(&socket, hostName, (TlsVerifyMode)request.connection.verifyMode,
+                         request.connection.expectedFingerprint,
+                         request.connection.allowLegacyTls, errorText))
+        {
+            return false;
+        }
+        stream = &tls;
+    }
+
+    if (!PrepareRequest(*stream, ip, port, request, errorText))
     {
         return false;
     }
 
     std::string leftover;
-    if (!ReadResponseHead(socket, response, leftover, kIoTimeoutMs, errorText))
+    if (!ReadResponseHead(*stream, response, leftover, kIoTimeoutMs, errorText))
     {
         return false;
     }
@@ -642,7 +679,7 @@ bool HttpClient::DownloadToFile(const std::string& ip,
         char temp[4096];
         for (;;)
         {
-            int received = socket.Recv(temp, sizeof(temp), kIoTimeoutMs);
+            int received = stream->Recv(temp, sizeof(temp), kIoTimeoutMs);
             if (received <= 0)
             {
                 break;
@@ -660,7 +697,7 @@ bool HttpClient::DownloadToFile(const std::string& ip,
     int64 length = response.ContentLength();
     int64 total = (response.IsChunked() || length < 0) ? -1 : length;
 
-    HttpBodyReader reader(&socket, length, response.IsChunked(), leftover);
+    HttpBodyReader reader(stream, length, response.IsChunked(), leftover);
     std::vector<unsigned char> buffer(64 * 1024);
     int64 received = 0;
 
