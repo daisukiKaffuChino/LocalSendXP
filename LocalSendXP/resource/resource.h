@@ -23,6 +23,9 @@
 #define IDD_SETTINGS_SECURITY           123
 #define IDD_HISTORY                     124
 
+// ---- bitmaps ------------------------------------------------------------
+#define IDB_BANNER                      140
+
 // ---- string table -------------------------------------------------------
 #define IDS_APP_TITLE                   200
 #define IDS_APP_SUBTITLE                201
@@ -347,3 +350,4 @@
 #define IDC_HIST_DELETE                 1113
 #define IDC_HIST_CLEAR                  1114
 #define IDC_HIST_HINT                   1115
+#define IDC_ABOUT_BANNER                1120

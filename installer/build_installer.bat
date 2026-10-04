@@ -46,8 +46,8 @@ if defined RAW (
     for /f "tokens=1 delims=;" %%T in ("!RAW!") do set "VERSION=%%~T"
 )
 if not defined VERSION (
-    echo [WARN] cannot read LSXP_CLIENT_VERSION, falling back to 1.0.0
-    set "VERSION=1.0.0"
+    echo [WARN] cannot read LSXP_CLIENT_VERSION, falling back to 1.1.0
+    set "VERSION=1.1.0"
 )
 echo [INFO] version %VERSION%
 

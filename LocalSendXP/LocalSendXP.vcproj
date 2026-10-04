@@ -606,6 +606,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\resource\banner.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\resource\banner.jpg"
+				>
+			</File>
+			<File
 				RelativePath=".\resource\LocalSendXP.rc"
 				>
 			</File>

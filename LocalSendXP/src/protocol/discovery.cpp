@@ -7,7 +7,12 @@ namespace lsxp {
 
 namespace {
 
-const DWORD kDeviceExpiryMs = 90 * 1000;
+// A device leaves the list only after this long without a single announcement.
+// It used to be 90 seconds, which dropped peers that announce slowly - an
+// official LocalSend client that Android put to sleep stops announcing for
+// minutes, and it showed up as "the device disappeared and Refresh did not
+// bring it back".
+const DWORD kDeviceExpiryMs = 5 * 60 * 1000;
 const int     kScanThreads   = 8;
 
 struct ScanJob
@@ -174,11 +179,18 @@ void DiscoveryService::Run()
         if ((now - lastCleanup) >= 15000)
         {
             lastCleanup = now;
-            if (m_devices != NULL && m_devices->RemoveExpired(kDeviceExpiryMs) > 0)
+            if (m_devices != NULL)
             {
-                if (m_app != NULL)
+                int removed = m_devices->RemoveExpired(kDeviceExpiryMs);
+                if (removed > 0)
                 {
-                    m_app->NotifyDevicesChanged();
+                    LogLine("discovery: %d device(s) were quiet for %d seconds and left the "
+                            "list (Refresh asks the network again)",
+                            removed, (int)(kDeviceExpiryMs / 1000));
+                    if (m_app != NULL)
+                    {
+                        m_app->NotifyDevicesChanged();
+                    }
                 }
             }
         }
@@ -413,7 +425,23 @@ DWORD WINAPI DiscoveryService::ScanWorker(LPVOID parameter)
         Device updated;
         int httpStatus = 0;
         std::string errorText;
-        if (proto::SendRegister(device, *job->config, updated, httpStatus, errorText, 400))
+
+        // Try HTTPS first: an official LocalSend client with encryption enabled
+        // serves TLS only, so the old plain HTTP probe never saw it - that is
+        // why "Refresh" could not bring such a device back.  We do not know its
+        // fingerprint yet, so the certificate is accepted for this one probe and
+        // the fingerprint from the answer is pinned for every later exchange.
+        device.protocol = "https";
+        bool found = proto::SendRegister(device, *job->config, updated, httpStatus,
+                                         errorText, 400, true);
+        if (!found)
+        {
+            device.protocol = "http";
+            found = proto::SendRegister(device, *job->config, updated, httpStatus,
+                                        errorText, 400);
+        }
+
+        if (found)
         {
             bool isNew = false;
             job->service->m_devices->AddOrUpdate(updated, &isNew);

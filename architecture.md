@@ -607,6 +607,35 @@ build_installer.bat rebuild      :: 先全量重编程序，再打包
    （顺带记下另一个易混淆点：装到 Program Files 后数据目录回退到 `%APPDATA%\LocalSendXP`，
    看日志要去那里看，而不是 exe 目录。）
 
+8. **设备过一会儿从"附近设备"里消失、按刷新也没用**（1.1.0 修）。两个原因叠在一起：
+   - 过期时间太短：`kDeviceExpiryMs` 原本是 **90 秒**。官方 LocalSend 客户端被 Android
+     冻结/省电后就不再按 30 秒周期公告了，只要安静 90 秒，我们就把设备从列表里删掉。
+     现在放宽到 **5 分钟**，并且删除时写日志：
+     `discovery: N device(s) were quiet for 300 seconds and left the list (Refresh asks the network again)`。
+   - **刷新只探明文 HTTP**：`RunScan()` 里构造的 `Device` 用默认的 `protocol = "http"`，
+     而开了"加密"的官方客户端**只服务 HTTPS**，所以刷新永远找不到它——这正是"按刷新也没用"
+     的原因（Android 把 App 冻结时它不会回公告，刷新是唯一的补救）。
+     现在扫描**先试 HTTPS 再退 HTTP**；第一次探测时还不知道对方的指纹，所以给
+     `SendRegister()` 加了 `acceptAnyCertificate` 参数（仅扫描用，映射到
+     `TLS_VERIFY_ALLOW_INSECURE`），**响应里带回的指纹会存进设备记录，之后所有传输仍然按指纹固定**。
+   实测：伪造一个"只公告一次然后永远安静"的设备，修复后 1/2/3 分钟都还在列表里（修复前 90 秒就会被删）；
+   真实刷新在局域网里找到了手机：`discovery: found 战略性的椰子 (192.168.1.43:53317) protocol 2.2`。
+
+9. **关于页换成 banner 图片**（1.1.0）。JPEG 不能直接喂给 Win32 静态控件（`SS_BITMAP` 要 HBITMAP），
+   而为了这一张图把 GDI+ 或图片解码库链进程序不划算，所以按 2000 年代的做法：把
+   `resource/banner.jpg`（1600×320）**预先缩放成 480×96 的 24 位 BMP** `resource/banner.bmp`
+   放进资源（`IDB_BANNER`），对话框里用一个 `SS_BITMAP` 静态控件显示。
+   模板按 64 个对话框单位预留横幅高度，但小字号（如 Tahoma 8pt）下 64 DU 不足 96 像素，
+   所以 `PlaceBanner()` 会在运行时量一遍：装不下就把下面的文字行整体下移并加高对话框，
+   顺便把对话框加宽到能放下整幅图。实测（宋体 9pt）：对话框 510×348，横幅 480×96 已装载，
+   标题行 `LocalSend XP 1.1.0`，所有文字都在横幅下方、无重叠。
+
+   文案也顺手去重了：原先这一页里 "LocalSend" 出现 **9 次**，其中三句在重复同一件事
+   （「非官方 LocalSend 协议客户端」／「是 LocalSend 协议的非官方 Windows 客户端」／
+   「与 LocalSend 官方项目无关」）。现在每行只讲一件新信息——
+   产品名与版本 → 这是什么（局域网文件互传工具）→ 运行环境与互通性 → 协议版本 →
+   免责声明与协议链接 → 作者，"LocalSend" 只剩 5 次（含标题与链接里的域名）。
+
 ### 已验证 / 未验证
 
 - 已验证：`build_installer.bat` 能正确取到版本号（1.0.0）、载荷校验、ISCC 定位与

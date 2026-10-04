@@ -16,7 +16,7 @@ namespace lsxp {
 const char* const LSXP_MULTICAST_GROUP  = "224.0.0.167";
 const char* const LSXP_PROTOCOL_VERSION = "2.2";
 const char* const LSXP_CLIENT_NAME      = "LocalSend XP";
-const char* const LSXP_CLIENT_VERSION   = "1.0.0";
+const char* const LSXP_CLIENT_VERSION   = "1.1.0";
 
 // ---------------------------------------------------------------- logging
 namespace {

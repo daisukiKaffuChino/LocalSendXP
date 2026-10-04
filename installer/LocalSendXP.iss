@@ -22,7 +22,7 @@
 #define BinDir RepoRoot + "\LocalSendXP\bin\Release"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.1.0"
 #endif
 ; VersionInfoVersion must be numeric (four numbers, e.g. 1.0.0.0) while
 ; AppVersion may be any text.  build_installer.bat reads a plain x.y.z version

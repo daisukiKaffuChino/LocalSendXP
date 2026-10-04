@@ -15,6 +15,9 @@ IDI_TOOL_SETTINGS   ICON            "..\\icons\\settings.ico"
 IDI_TOOL_ABOUT      ICON            "..\\icons\\about.ico"
 IDI_TOOL_HISTORY    ICON            "..\\icons\\history.ico"
 
+// About dialog banner (converted from banner.jpg, see resource/banner.jpg)
+IDB_BANNER          BITMAP          "banner.bmp"
+
 CREATEPROCESS_MANIFEST_RESOURCE_ID  RT_MANIFEST  "LocalSendXP.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -72,20 +75,20 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // About
 
-IDD_ABOUT DIALOGEX 0, 0, 340, 180
+IDD_ABOUT DIALOGEX 0, 0, 340, 232
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "关于 LocalSend XP"
 FONT 9, "宋体", 400, 0, 0x86
 BEGIN
-    ICON            IDI_APP,IDC_STATIC,14,14,21,20
-    LTEXT           "",IDC_ABOUT_NAME,60,13,266,10,SS_NOPREFIX
-    LTEXT           "",IDC_ABOUT_SUBTITLE,60,26,266,10
-    LTEXT           "",IDC_ABOUT_INFO,60,46,266,26,SS_NOPREFIX
-    LTEXT           "",IDC_ABOUT_PROTOCOL,60,75,266,20
-    LTEXT           "",IDC_ABOUT_CREDIT,60,96,266,26
-    LTEXT           "作者：GitHub @daisukiKaffuChino",IDC_ABOUT_AUTHOR,60,124,266,10
-    PUSHBUTTON      "开源仓库(&G)",IDC_ABOUT_SOURCE,208,159,62,14
-    DEFPUSHBUTTON   "确定",IDOK,276,159,50,14
+    CONTROL         "",IDC_ABOUT_BANNER,"Static",SS_BITMAP | SS_CENTERIMAGE,10,10,320,64
+    LTEXT           "",IDC_ABOUT_NAME,14,84,312,10,SS_NOPREFIX
+    LTEXT           "",IDC_ABOUT_SUBTITLE,14,97,312,10
+    LTEXT           "",IDC_ABOUT_INFO,14,117,312,26,SS_NOPREFIX
+    LTEXT           "",IDC_ABOUT_PROTOCOL,14,146,312,20
+    LTEXT           "",IDC_ABOUT_CREDIT,14,167,312,26
+    LTEXT           "作者：GitHub @daisukiKaffuChino",IDC_ABOUT_AUTHOR,14,195,312,10
+    PUSHBUTTON      "开源仓库(&G)",IDC_ABOUT_SOURCE,208,211,62,14
+    DEFPUSHBUTTON   "确定",IDOK,276,211,50,14
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -263,7 +266,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE                    "LocalSend XP"
-    IDS_APP_SUBTITLE                 "非官方 LocalSend 协议客户端"
+    IDS_APP_SUBTITLE                 "Windows 局域网文件互传工具"
     IDS_STATUS_ONLINE                "已连接到局域网"
     IDS_STATUS_OFFLINE               "网络未连接"
     IDS_STATUS_SCANNING              "正在搜索局域网设备，请稍候……"
@@ -341,9 +344,9 @@ BEGIN
     IDS_SET_ERR_DIR                  "保存文件夹不存在，是否现在创建？"
     IDS_SHARE_TITLE                  "通过浏览器分享"
     IDS_SHARE_COPIED                 "网址已复制到剪贴板。"
-    IDS_ABOUT_INFO                   "LocalSend XP 是 LocalSend 协议的非官方 Windows 客户端，面向 Windows XP SP3 及更高版本。"
-    IDS_ABOUT_PROTOCOL               "支持的协议版本：LocalSend Protocol v2.2（同时兼容 v1）"
-    IDS_ABOUT_CREDIT                 "本项目与 LocalSend 官方项目无关。协议参考：github.com/localsend/protocol"
+    IDS_ABOUT_INFO                   "支持 Windows XP SP3 及以上版本，可与电脑、手机上的官方客户端互传文件。"
+    IDS_ABOUT_PROTOCOL               "LocalSend Protocol v2.2，同时兼容 v1"
+    IDS_ABOUT_CREDIT                 "非官方项目，与 LocalSend 官方项目无关联。协议参考：github.com/localsend/protocol"
     IDS_LOG_OPENFAIL                 "无法打开日志文件。"
     IDS_MENU_SHOW                    "显示主窗口(&O)"
     IDS_MENU_SEND                    "发送文件(&S)..."
@@ -475,7 +478,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE                    "LocalSend XP"
-    IDS_APP_SUBTITLE                 "Unofficial LocalSend protocol client"
+    IDS_APP_SUBTITLE                 "LAN file transfer tool for Windows"
     IDS_STATUS_ONLINE                "Connected to the local network"
     IDS_STATUS_OFFLINE               "Network not connected"
     IDS_STATUS_SCANNING              "Searching for devices on the local network..."
@@ -553,9 +556,9 @@ BEGIN
     IDS_SET_ERR_DIR                  "The destination folder does not exist. Create it now?"
     IDS_SHARE_TITLE                  "Share via browser"
     IDS_SHARE_COPIED                 "The URL has been copied to the clipboard."
-    IDS_ABOUT_INFO                   "LocalSend XP is an unofficial Windows client for the LocalSend protocol, targeting Windows XP SP3 and later."
-    IDS_ABOUT_PROTOCOL               "Protocol: LocalSend Protocol v2.2 (v1 compatible)"
-    IDS_ABOUT_CREDIT                 "This project is not affiliated with the official LocalSend project. Protocol reference: github.com/localsend/protocol"
+    IDS_ABOUT_INFO                   "Runs on Windows XP SP3 and later, and exchanges files with the official clients on phones and PCs."
+    IDS_ABOUT_PROTOCOL               "LocalSend Protocol v2.2, v1 compatible"
+    IDS_ABOUT_CREDIT                 "Unofficial project, not affiliated with the official LocalSend project. Protocol reference: github.com/localsend/protocol"
     IDS_LOG_OPENFAIL                 "Cannot open the log file."
     IDS_MENU_SHOW                    "Show main window(&O)"
     IDS_MENU_SEND                    "Send file(&S)..."

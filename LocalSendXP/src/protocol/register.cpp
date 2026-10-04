@@ -123,7 +123,8 @@ const std::string& LocalFingerprint()
     return g_localFingerprint;
 }
 
-void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request)
+void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request,
+                         bool acceptAnyCertificate)
 {
     request.connection.secure = false;
     request.connection.allowLegacyTls = config.allowLegacyTls;
@@ -139,6 +140,17 @@ void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest
     request.connection.secure = true;
     request.connection.hostName = device.ip;
     request.connection.expectedFingerprint = device.fingerprint;
+
+    if (acceptAnyCertificate)
+    {
+        // Network scan only: the peer has not told us its fingerprint yet, so
+        // there is nothing to pin.  The certificate is accepted just to read
+        // /register; the fingerprint from that response is stored with the
+        // device and every later exchange pins it again.
+        request.connection.verifyMode = TLS_VERIFY_ALLOW_INSECURE;
+        return;
+    }
+
     request.connection.verifyMode = config.allowInsecureHttps
                                     ? TLS_VERIFY_ALLOW_INSECURE
                                     : TLS_VERIFY_FINGERPRINT;
@@ -226,7 +238,8 @@ bool SendRegister(const Device& device,
                   Device& updatedDevice,
                   int& httpStatus,
                   std::string& errorText,
-                  DWORD timeoutMs)
+                  DWORD timeoutMs,
+                  bool acceptAnyCertificate)
 {
     bool v1 = device.IsProtocolV1();
 
@@ -237,7 +250,7 @@ bool SendRegister(const Device& device,
     request.SetHeader("Content-Type", "application/json");
     request.SetHeader("Content-Length", FormatUInt((uint64)request.body.size()));
 
-    ApplyDeviceSecurity(device, config, request);
+    ApplyDeviceSecurity(device, config, request, acceptAnyCertificate);
 
     HttpResponse response;
     if (!HttpClient::Execute(device.ip, device.port, request, response, timeoutMs, errorText))

@@ -6,7 +6,7 @@ written in C++03 against the plain Win32 API.
 The goal is simple: what would LocalSend have looked like if it had shipped in 2004?
 Menu bar, toolbar, status bar, list views, tray icon, an `.ini` file next to the program,
 and a setup wizard with a Start Menu folder. No Electron, no Qt, no .NET, no runtime to
-install - one 1.4 MB executable and two OpenSSL DLLs.
+install - one 1.2 MB executable and two OpenSSL DLLs.
 
 ![Windows XP](https://img.shields.io/badge/Windows-XP%20SP3%20%7C%20Vista%20%7C%207%20%7C%208%20%7C%2010%20%7C%2011-3a6ea5)
 ![Language](https://img.shields.io/badge/UI-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%20%7C%20English-4c8f4c)
@@ -54,7 +54,7 @@ install - one 1.4 MB executable and two OpenSSL DLLs.
 | | |
 | --- | --- |
 | Operating system | Windows XP SP3 or later (32-bit build, also runs on 64-bit Windows) |
-| Disk space | about 3.5 MB |
+| Disk space | about 3 MB |
 | Runtime | none - no .NET, no Visual C++ redistributable, no Java |
 | Network | IPv4 LAN; inbound TCP/UDP 53317 for receiving |
 

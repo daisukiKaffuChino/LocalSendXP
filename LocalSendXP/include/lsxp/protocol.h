@@ -90,7 +90,8 @@ void               SetLocalFingerprint(const std::string& fingerprint);
 const std::string& LocalFingerprint();
 
 // Configures request.connection for the transport a peer announced.
-void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request);
+void ApplyDeviceSecurity(const Device& device, const Config& config, HttpRequest& request,
+                         bool acceptAnyCertificate = false);
 
 // ---- outgoing (we are the sender) ---------------------------------------
 bool SendRegister(const Device& device,
@@ -98,7 +99,8 @@ bool SendRegister(const Device& device,
                   Device& updatedDevice,
                   int& httpStatus,
                   std::string& errorText,
-                  DWORD timeoutMs = 3000);
+                  DWORD timeoutMs = 3000,
+                  bool acceptAnyCertificate = false);
 
 bool PrepareUpload(const Device& device,
                    const Config& config,
