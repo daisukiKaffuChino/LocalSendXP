@@ -317,8 +317,8 @@ BEGIN
     IDS_MSG_NOTIFY_TITLE             "LocalSend XP"
     IDS_MSG_RECEIVED                 "已接收 %d 个文件，保存在：%s"
     IDS_MSG_RECEIVED_PARTIAL         "已接收 %d 个文件，其中 %d 个失败。"
-    IDS_MSG_TRANSFER_SENT            "已向 %s 发送 %d 个文件。"
-    IDS_MSG_SENT_TO                  "正在向 %s 发送 %d 个文件（共 %s）"
+    IDS_MSG_TRANSFER_SENT            "已发送 %d 个文件到 %s。"
+    IDS_MSG_SENT_TO                  "正在发送 %d 个文件到 %s（共 %s）"
     IDS_MSG_PIN_REQUIRED             "对方要求输入 PIN 码。"
     IDS_MSG_DEVICE_BUSY              "对方正在与其它设备传输，请稍后再试。"
     IDS_MSG_REJECTED                 "对方拒绝了这次传输。"
@@ -529,7 +529,7 @@ BEGIN
     IDS_MSG_NOTIFY_TITLE             "LocalSend XP"
     IDS_MSG_RECEIVED                 "%d file(s) received, saved to: %s"
     IDS_MSG_RECEIVED_PARTIAL         "%d file(s) received, %d failed."
-    IDS_MSG_TRANSFER_SENT            "%d file(s) sent to %s."
+    IDS_MSG_TRANSFER_SENT            "Sent %d file(s) to %s."
     IDS_MSG_SENT_TO                  "Sending %d file(s) to %s (%s in total)"
     IDS_MSG_PIN_REQUIRED             "The receiver requires a PIN."
     IDS_MSG_DEVICE_BUSY              "The peer is busy with another transfer, please try again later."
@@ -709,8 +709,8 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 // Version
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -727,12 +727,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "LocalSendXP Project"
             VALUE "FileDescription",  "LocalSend XP - 非官方 LocalSend 客户端"
-            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "FileVersion",      "1.1.0.0"
             VALUE "InternalName",     "LocalSendXP"
             VALUE "LegalCopyright",   "本项目与 LocalSend 官方项目无关"
             VALUE "OriginalFilename", "LocalSendXP.exe"
             VALUE "ProductName",      "LocalSend XP"
-            VALUE "ProductVersion",   "1.0.0.0"
+            VALUE "ProductVersion",   "1.1.0.0"
             VALUE "Comments",         "Win32 / Winsock2 / C++03"
         END
     END

@@ -84,6 +84,85 @@ void PlaceBanner(HWND dialog, HBITMAP banner)
                  info.bmWidth, info.bmHeight, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
+// Every language shares one dialog template, and its geometry is tuned for the
+// short Chinese caption.  The English caption of the repository button is a lot
+// wider, so measure the real text and widen the button to the left instead of
+// letting the classic push button clip it.
+void FitSourceButton(HWND dialog)
+{
+    HWND button = GetDlgItem(dialog, IDC_ABOUT_SOURCE);
+    HWND okButton = GetDlgItem(dialog, IDOK);
+    if (button == NULL || okButton == NULL)
+    {
+        return;
+    }
+
+    std::wstring caption = LoadStr(IDS_BTN_SOURCE);
+    std::wstring plain;
+    for (size_t i = 0; i < caption.size(); ++i)
+    {
+        if (caption[i] != L'&')          // the mnemonic marker is never drawn
+        {
+            plain += caption[i];
+        }
+    }
+
+    HDC dc = GetDC(button);
+    if (dc == NULL)
+    {
+        return;
+    }
+    HFONT font = (HFONT)SendMessageW(button, WM_GETFONT, 0, 0);
+    if (font == NULL)
+    {
+        font = (HFONT)GetPropW(dialog, L"lsxpUiFont");
+    }
+    HGDIOBJ previous = (font != NULL) ? SelectObject(dc, font) : NULL;
+    SIZE textSize;
+    ZeroMemory(&textSize, sizeof(textSize));
+    BOOL measured = GetTextExtentPoint32W(dc, plain.c_str(), (int)plain.size(), &textSize);
+    if (previous != NULL)
+    {
+        SelectObject(dc, previous);
+    }
+    ReleaseDC(button, dc);
+
+    if (!measured || textSize.cx <= 0)
+    {
+        return;
+    }
+
+    RECT buttonRect;
+    RECT okRect;
+    GetWindowRect(button, &buttonRect);
+    GetWindowRect(okButton, &okRect);
+    MapWindowPoints(NULL, dialog, (POINT*)&buttonRect, 2);
+    MapWindowPoints(NULL, dialog, (POINT*)&okRect, 2);
+
+    int width = buttonRect.right - buttonRect.left;
+    // Room for the button frame plus the padding XP keeps around a caption.
+    int needed = textSize.cx + GetSystemMetrics(SM_CXEDGE) * 4 + 24;
+    if (needed <= width)
+    {
+        return;
+    }
+
+    int gap = okRect.left - buttonRect.right;
+    if (gap < 0)
+    {
+        gap = 8;
+    }
+    int right = okRect.left - gap;
+    int left = right - needed;
+    if (left < 10)
+    {
+        left = 10;
+    }
+    SetWindowPos(button, NULL, left, buttonRect.top, right - left,
+                 buttonRect.bottom - buttonRect.top,
+                 SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 INT_PTR CALLBACK AboutProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lParam)
 {
     (void)lParam;
@@ -98,6 +177,13 @@ INT_PTR CALLBACK AboutProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPar
             std::wstring product = LoadStr(IDS_APP_TITLE) + L" " +
                                    AnsiToWide(LSXP_CLIENT_VERSION);
             SetDlgItemTextW(dialog, IDC_ABOUT_NAME, product.c_str());
+            HFONT boldFont = CreateGuiFont(true);
+            if (boldFont != NULL)
+            {
+                SendDlgItemMessageW(dialog, IDC_ABOUT_NAME, WM_SETFONT,
+                                    (WPARAM)boldFont, TRUE);
+                SetPropW(dialog, L"lsxpAboutBoldFont", (HANDLE)boldFont);
+            }
             ApplyText(dialog, IDC_ABOUT_SUBTITLE, IDS_APP_SUBTITLE);
             ApplyText(dialog, IDC_ABOUT_INFO, IDS_ABOUT_INFO);
             ApplyText(dialog, IDC_ABOUT_PROTOCOL, IDS_ABOUT_PROTOCOL);
@@ -114,6 +200,8 @@ INT_PTR CALLBACK AboutProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPar
                 SetWindowLongPtrW(dialog, DWLP_USER, (LONG_PTR)banner);
                 PlaceBanner(dialog, banner);
             }
+
+            FitSourceButton(dialog);
         }
         return TRUE;
 
@@ -138,6 +226,11 @@ INT_PTR CALLBACK AboutProc(HWND dialog, UINT message, WPARAM wParam, LPARAM lPar
 
     case WM_DESTROY:
         {
+            HFONT boldFont = (HFONT)RemovePropW(dialog, L"lsxpAboutBoldFont");
+            if (boldFont != NULL)
+            {
+                DeleteObject(boldFont);
+            }
             HBITMAP banner = (HBITMAP)GetWindowLongPtrW(dialog, DWLP_USER);
             if (banner != NULL)
             {

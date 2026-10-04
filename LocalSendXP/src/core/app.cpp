@@ -96,6 +96,7 @@ bool App::Init(HINSTANCE instance, const std::wstring& commandLine)
     m_config.Load();
     SetResourceLanguage(m_config.ResourceLanguageId());
     LogInit(JoinPathW(GetDataDirectoryW(), L"LocalSendXP.log"));
+    InstallCrashHandler();
     LogLine("---- startup: %s (port %d, fingerprint %s) ----",
             WideToUtf8(m_config.alias).c_str(), m_config.port, m_config.fingerprint.c_str());
 
@@ -761,7 +762,7 @@ void App::RunSendJob(SendJob* job)
     NotifyTransfersChanged();
 
     Balloon(LoadStr(IDS_MSG_NOTIFY_TITLE),
-            FormatStr(IDS_MSG_TRANSFER_SENT, Utf8ToWide(device.alias).c_str(), sentCount));
+            FormatStr(IDS_MSG_TRANSFER_SENT, sentCount, Utf8ToWide(device.alias).c_str()));
 }
 
 // ----------------------------------------------------------- receive worker

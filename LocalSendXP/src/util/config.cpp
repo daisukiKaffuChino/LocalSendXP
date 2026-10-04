@@ -6,6 +6,15 @@ namespace lsxp {
 
 namespace {
 
+// A brand new installation follows the language the user picked for the Windows
+// UI itself.  Only English and Simplified Chinese ship with the program, so any
+// other UI language falls back to English.
+const char* DefaultUiLanguage()
+{
+    LANGID id = GetUserDefaultUILanguage();
+    return (PRIMARYLANGID(id) == LANG_CHINESE) ? "zh" : "en";
+}
+
 std::wstring ReadIniString(const std::wstring& file, const wchar_t* section,
                            const wchar_t* key, const wchar_t* defaultValue)
 {
@@ -109,7 +118,7 @@ void Config::ApplyDefaults()
     requireClientCertificate = false;
     certificatePath.clear();
     caBundlePath.clear();
-    language = "zh";
+    language = DefaultUiLanguage();
     fingerprint = RandomHex(16);
     m_iniPath = GetConfigFilePathW();
     m_wasCreated = false;

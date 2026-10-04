@@ -45,6 +45,9 @@ void LogClose();
 void LogLine(const char* format, ...);
 void LogLineW(const wchar_t* format, ...);
 std::wstring LogPath();
+// Logs the exception code, the faulting RVA and a short call stack before the
+// process dies, so that a crash report can be resolved against the .pdb.
+void InstallCrashHandler();
 
 // ---- string helpers (UTF-8 unless the name says otherwise) --------------
 std::string  WideToUtf8(const std::wstring& text);

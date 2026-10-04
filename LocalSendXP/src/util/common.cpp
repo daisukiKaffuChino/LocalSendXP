@@ -155,6 +155,66 @@ std::wstring LogPath()
     return g_logPath;
 }
 
+namespace {
+
+// Written to the log when the process is about to die: the exception code, the
+// faulting address as an RVA (so it can be looked up in the .pdb) and a short
+// call stack.  Everything here uses stack buffers and WriteFile only, because
+// the heap may already be damaged when this runs.
+LONG WINAPI CrashFilter(EXCEPTION_POINTERS* info)
+{
+    DWORD code = 0;
+    void* address = NULL;
+    if (info != NULL && info->ExceptionRecord != NULL)
+    {
+        code = info->ExceptionRecord->ExceptionCode;
+        address = info->ExceptionRecord->ExceptionAddress;
+    }
+
+    HMODULE module = GetModuleHandleW(NULL);
+    unsigned long long base = (unsigned long long)(uintptr_t)module;
+    unsigned long long rva = (unsigned long long)(uintptr_t)address;
+    if (rva >= base)
+    {
+        rva -= base;
+    }
+
+    LogLine("!!!! unhandled exception 0x%08lX", (unsigned long)code);
+    LogLine("!!!! module base %p, fault rva +0x%I64X", (void*)module, rva);
+
+    // RtlCaptureStackBackTrace is exported by kernel32 on XP SP1 and later, but
+    // the CRT header only declares it for newer targets, so it is resolved at
+    // run time.  Without it the fault address alone is still logged.
+    typedef USHORT (WINAPI *CaptureStackFn)(ULONG, ULONG, void**, ULONG*);
+    CaptureStackFn capture = NULL;
+    HMODULE kernel = GetModuleHandleW(L"kernel32.dll");
+    if (kernel != NULL)
+    {
+        capture = (CaptureStackFn)(void*)GetProcAddress(kernel, "RtlCaptureStackBackTrace");
+    }
+
+    void* stack[24];
+    USHORT frames = 0;
+    if (capture != NULL)
+    {
+        frames = capture(1, 24, stack, NULL);
+    }
+    for (int i = 0; i < (int)frames; ++i)
+    {
+        unsigned long long value = (unsigned long long)(uintptr_t)stack[i];
+        LogLine("!!!!   frame %2d  %p  (+0x%I64X)", i, stack[i],
+                (value >= base) ? (value - base) : value);
+    }
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+}  // namespace
+
+void InstallCrashHandler()
+{
+    SetUnhandledExceptionFilter(&CrashFilter);
+}
+
 void LogLine(const char* format, ...)
 {
     if (!g_logReady || g_logFile == INVALID_HANDLE_VALUE)
